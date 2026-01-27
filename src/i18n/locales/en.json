@@ -1,0 +1,121 @@
+{
+  "appName": "ServiceConnect",
+
+  "loginTitle": "Login",
+  "loginSubtitle": "Continue to your local service account",
+  "login": "Login",
+  "loginButton": "Continue",
+  "loggingIn": "Logging in...",
+  "enterValidMobile": "Please enter a valid mobile number",
+  "enterCredentials": "Please enter email and password",
+  "enterEmail": "Please enter your email",
+  "resetSent": "Password reset email sent",
+
+  "email": "Email",
+  "password": "Password",
+  "forgot": "Forgot password?",
+  "newHere": "New here?",
+  "register": "Register",
+  "registering": "Registering...",
+  "fillAllFields": "Please fill all fields",
+
+  "registerAs": "Register As",
+  "registerCustomer": "Customer",
+  "registerProvider": "Service Provider",
+  "backToLogin": "Back to Login",
+
+  "fullName": "Full Name",
+  "phoneNumber": "Phone Number",
+  "location": "Location",
+
+  "customer": "Customer",
+  "provider": "Service Provider",
+  "admin": "Admin",
+
+  "hi": "Hi",
+  "logout": "Logout",
+  "next": "Next",
+  "back": "Back",
+  "finish_setup": "Finish Setup",
+  "language": "Language",
+
+  "findServices": "Find Services",
+  "requestService": "Request Service",
+  "myBookings": "My Bookings",
+  "bookNow": "Book Now",
+  "contact": "Contact",
+
+  "providerHub": "Provider Hub",
+  "providerDashboard": "Provider Dashboard",
+  "providerName": "Provider Name",
+  "service": "Service",
+  "areas": "Service Areas",
+  "status": "Status",
+  "actions": "Actions",
+  "verify": "Verify",
+  "suspend": "Suspend",
+  "makePremium": "Make Premium",
+
+  "verified": "Verified",
+  "pending": "Pending",
+  "suspended": "Suspended",
+  "premium": "Premium",
+
+  "providerRegister": "Provider Registration",
+  "serviceType": "Service Type",
+  "selectAreas": "Select Service Areas",
+  "submit": "Submit",
+  "providerSubmitted": "Application submitted. Await admin verification.",
+
+  "onboarding_title": "Provider Setup",
+  "onboarding_profile": "Profile Setup",
+  "onboarding_services": "Services & Pricing",
+  "onboarding_schedule": "Working Schedule",
+  "onboarding_finish": "Finish",
+
+  "profile_setup": "Profile Setup",
+  "profile_setup_subtitle": "Complete your basic profile information",
+
+  "services_pricing": "Services & Pricing",
+  "services_pricing_subtitle": "Select services you provide",
+
+  "working_schedule": "Working Schedule",
+  "working_schedule_subtitle": "Set your working schedule",
+
+  "onboarding_complete": "Setup Complete",
+  "onboarding_complete_subtitle": "Your provider account is ready to accept jobs",
+
+  "schedule_title": "My Schedule",
+  "schedule_subtitle": "Manage your working days and time",
+  "working_days": "Working Days",
+  "working_hours": "Working Hours",
+  "save_schedule": "Save Schedule",
+
+  "monday": "Monday",
+  "tuesday": "Tuesday",
+  "wednesday": "Wednesday",
+  "thursday": "Thursday",
+  "friday": "Friday",
+  "saturday": "Saturday",
+  "sunday": "Sunday",
+
+  "onboarding_services_subtitle": "Select services you provide",
+  "service_ac_repair": "AC Repair",
+  "service_home_cleaning": "Home Cleaning",
+
+  "search_services": "Search services",
+  "provider_dashboard_title": "Provider Control Center",
+  "provider_dashboard_subtitle": "Live overview of your business",
+
+  "provider_new_requests": "New Requests",
+  "provider_active_jobs": "Active Jobs",
+  "provider_todays_earnings": "Today's Earnings",
+  "provider_completion_rate": "Completion Rate",
+
+  "provider_view_requests": "View Incoming Requests",
+  "provider_manage_jobs": "Manage Active Jobs",
+  "provider_manage_schedule": "Manage Schedule",
+  "provider_view_earnings": "View Earnings",
+  "provider_today_earnings": "Today's Earnings"
+
+}

@@ -1,0 +1,129 @@
+{
+  "appName": "सर्विस कनेक्ट",
+
+  "loginTitle": "लॉगिन",
+  "loginSubtitle": "अपने स्थानीय सेवा खाते में प्रवेश करें",
+  "login": "लॉगिन",
+  "loginButton": "जारी रखें",
+  "loggingIn": "लॉगिन हो रहा है...",
+  "enterValidMobile": "कृपया सही मोबाइल नंबर दर्ज करें",
+  "enterCredentials": "कृपया ईमेल और पासवर्ड दर्ज करें",
+  "enterEmail": "कृपया अपना ईमेल दर्ज करें",
+  "resetSent": "पासवर्ड रीसेट ईमेल भेज दिया गया है",
+
+  "email": "ईमेल",
+  "password": "पासवर्ड",
+  "forgot": "पासवर्ड भूल गए?",
+  "newHere": "नए हैं?",
+  "register": "रजिस्टर करें",
+
+  "registerAs": "इस रूप में रजिस्टर करें",
+  "registerCustomer": "ग्राहक",
+  "registerProvider": "सेवा प्रदाता",
+  "backToLogin": "लॉगिन पर वापस जाएँ",
+
+  "fullName": "पूरा नाम",
+  "phoneNumber": "फोन नंबर",
+  "fillAllFields": "कृपया सभी फ़ील्ड भरें",
+  "registering": "रजिस्टर हो रहा है...",
+
+  "customer": "ग्राहक",
+  "provider": "सेवा प्रदाता",
+  "admin": "प्रशासक",
+
+  "mobilePlaceholder": "मोबाइल नंबर दर्ज करें",
+
+  "findServices": "सेवाएँ खोजें",
+  "requestService": "सेवा अनुरोध",
+  "myBookings": "मेरी बुकिंग",
+  "providerHub": "प्रोवाइडर हब",
+  "providerDashboard": "प्रोवाइडर डैशबोर्ड",
+  "bookingManagement": "बुकिंग प्रबंधन",
+  "reviews": "समीक्षाएँ और रेटिंग",
+
+  "newBooking": "नई बुकिंग",
+  "bookNow": "अभी बुक करें",
+  "contact": "संपर्क करें",
+
+  "currentRole": "वर्तमान भूमिका",
+  "switchRole": "भूमिका बदलें",
+  "serviceArea": "सेवा क्षेत्र",
+  "language": "भाषा",
+
+  "adminDashboard": "एडमिन डैशबोर्ड",
+  "providerName": "सेवा प्रदाता का नाम",
+  "service": "सेवा",
+  "areas": "सेवा क्षेत्र",
+  "status": "स्थिति",
+  "actions": "कार्रवाई",
+  "verify": "सत्यापित करें",
+  "suspend": "निलंबित करें",
+  "makePremium": "प्रीमियम बनाएं",
+
+  "verified": "सत्यापित",
+  "pending": "लंबित",
+  "suspended": "निलंबित",
+  "premium": "प्रीमियम",
+
+  "providerRegister": "सेवा प्रदाता पंजीकरण",
+  "name": "नाम",
+  "mobile": "मोबाइल नंबर",
+  "serviceType": "सेवा प्रकार",
+  "selectAreas": "सेवा क्षेत्र चुनें",
+  "submit": "जमा करें",
+  "providerSubmitted": "आवेदन जमा हो गया है। कृपया एडमिन सत्यापन की प्रतीक्षा करें।",
+
+  "schedule_title": "मेरा समय-सारणी",
+  "schedule_subtitle": "अपने काम के दिन और समय प्रबंधित करें",
+  "working_days": "कार्य दिवस",
+  "working_hours": "कार्य समय",
+  "save_schedule": "समय सारणी सहेजें",
+  "monday": "सोमवार",
+  "tuesday": "मंगलवार",
+  "wednesday": "बुधवार",
+  "thursday": "गुरुवार",
+  "friday": "शुक्रवार",
+  "saturday": "शनिवार",
+  "sunday": "रविवार",
+
+  "onboarding_title": "प्रदाता सेटअप",
+  "onboarding_profile": "प्रोफ़ाइल सेटअप",
+  "onboarding_services": "सेवाएं और मूल्य",
+  "onboarding_schedule": "कार्य समय",
+  "onboarding_finish": "समाप्त",
+
+  "profile_setup": "प्रोफ़ाइल सेटअप",
+  "profile_setup_subtitle": "अपनी बुनियादी जानकारी भरें",
+
+  "services_pricing": "सेवाएं और मूल्य",
+  "services_pricing_subtitle": "आप कौन सी सेवाएं प्रदान करते हैं चुनें",
+
+  "working_schedule": "कार्य समय",
+  "working_schedule_subtitle": "अपना कार्य समय निर्धारित करें",
+
+  "onboarding_complete": "सेटअप पूरा हुआ",
+  "onboarding_complete_subtitle": "आपका सेवा प्रदाता खाता अब काम के लिए तैयार है",
+
+  "next": "आगे",
+  "back": "पीछे",
+  "finish_setup": "सेटअप पूरा करें",
+
+  "onboarding_services_subtitle": "आप कौन सी सेवाएं प्रदान करते हैं चुनें",
+  "service_ac_repair": "एसी मरम्मत",
+  "service_home_cleaning": "होम क्लीनिंग",
+
+  "provider_dashboard_title": "प्रदाता नियंत्रण केंद्र",
+  "provider_dashboard_subtitle": "आपके व्यवसाय का लाइव अवलोकन",
+
+  "provider_new_requests": "नई अनुरोध",
+  "provider_active_jobs": "सक्रिय कार्य",
+  "provider_todays_earnings": "आज की कमाई",
+  "provider_completion_rate": "पूर्णता दर",
+
+  "provider_view_requests": "आने वाले अनुरोध देखें",
+  "provider_manage_jobs": "सक्रिय कार्य प्रबंधित करें",
+  "provider_manage_schedule": "समय सारणी प्रबंधित करें",
+  "provider_view_earnings": "कमाई देखें",
+  "provider_today_earnings": "आज की कमाई"
+
+}

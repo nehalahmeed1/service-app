@@ -1,0 +1,17 @@
+{
+  "register": {
+    "title": "Admin Registration",
+    "name": "Full Name",
+    "email": "Email Address",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "submit": "Register",
+    "pending": "Your account is pending approval by admin",
+    "loginLink": "Already have an account? Login"
+  },
+  "errors": {
+    "passwordMismatch": "Passwords do not match",
+    "required": "All fields are required",
+    "failed": "Registration failed. Please try again."
+  }
+}

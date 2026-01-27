@@ -1,0 +1,132 @@
+{
+  "appName": "సర్వీస్ కనెక్ట్",
+
+  "loginTitle": "లాగిన్",
+  "loginSubtitle": "మీ స్థానిక సేవల ఖాతాలోకి ప్రవేశించండి",
+  "login": "లాగిన్",
+  "loginButton": "కొనసాగించండి",
+  "loggingIn": "లాగిన్ అవుతోంది...",
+  "enterValidMobile": "దయచేసి సరైన మొబైల్ నంబర్ నమోదు చేయండి",
+  "enterCredentials": "దయచేసి ఈమెయిల్ మరియు పాస్‌వర్డ్ ఇవ్వండి",
+  "enterEmail": "దయచేసి మీ ఈమెయిల్ ఇవ్వండి",
+  "resetSent": "పాస్‌వర్డ్ రీసెట్ ఈమెయిల్ పంపబడింది",
+
+  "email": "ఈమెయిల్",
+  "password": "పాస్‌వర్డ్",
+  "forgot": "పాస్‌వర్డ్ మర్చిపోయారా?",
+  "newHere": "కొత్తవారా?",
+  "register": "రిజిస్టర్ చేయండి",
+
+  "registerAs": "రిజిస్టర్ చేయండి",
+  "registerCustomer": "గ్రాహకుడు",
+  "registerProvider": "సేవాదారు",
+  "backToLogin": "లాగిన్‌కు తిరిగి వెళ్లండి",
+
+  "fullName": "పూర్తి పేరు",
+  "phoneNumber": "ఫోన్ నంబర్",
+  "fillAllFields": "దయచేసి అన్ని ఫీల్డ్స్ నింపండి",
+  "registering": "రిజిస్టర్ అవుతోంది...",
+
+  "customer": "గ్రాహకుడు",
+  "provider": "సేవాదారు",
+  "admin": "అడ్మిన్",
+
+  "mobilePlaceholder": "మొబైల్ నంబర్ నమోదు చేయండి",
+
+  "findServices": "సేవలను కనుగొనండి",
+  "requestService": "సేవ అభ్యర్థన",
+  "myBookings": "నా బుకింగ్స్",
+  "providerHub": "సేవాదారు హబ్",
+  "providerDashboard": "సేవాదారు డ్యాష్‌బోర్డ్",
+  "bookingManagement": "బుకింగ్ నిర్వహణ",
+  "reviews": "సమీక్షలు & రేటింగ్స్",
+
+  "newBooking": "కొత్త బుకింగ్",
+  "bookNow": "ఇప్పుడే బుక్ చేయండి",
+  "contact": "సంప్రదించండి",
+
+  "currentRole": "ప్రస్తుత పాత్ర",
+  "switchRole": "పాత్ర మార్చండి",
+  "serviceArea": "సేవా ప్రాంతం",
+  "language": "భాష",
+
+  "adminDashboard": "అడ్మిన్ డ్యాష్‌బోర్డ్",
+  "providerName": "సేవాదారుడి పేరు",
+  "service": "సేవ",
+  "areas": "సేవా ప్రాంతాలు",
+  "status": "స్థితి",
+  "actions": "చర్యలు",
+  "verify": "వెరిఫై చేయండి",
+  "suspend": "సస్పెండ్ చేయండి",
+  "makePremium": "ప్రీమియమ్ చేయండి",
+
+  "verified": "వెరిఫై చేయబడింది",
+  "pending": "పెండింగ్",
+  "suspended": "సస్పెండ్",
+  "premium": "ప్రీమియమ్",
+
+  "providerRegister": "సేవాదారు నమోదు",
+  "name": "పేరు",
+  "mobile": "మొబైల్ నంబర్",
+  "serviceType": "సేవ రకం",
+  "selectAreas": "సేవా ప్రాంతాలను ఎంచుకోండి",
+  "submit": "సమర్పించండి",
+  "providerSubmitted": "మీ దరఖాస్తు సమర్పించబడింది. అడ్మిన్ వెరిఫికేషన్ కోసం వేచి ఉండండి.",
+
+  "schedule_title": "నా షెడ్యూల్",
+  "schedule_subtitle": "మీ పని రోజులు మరియు సమయాన్ని నిర్వహించండి",
+  "working_days": "పని రోజులు",
+  "working_hours": "పని గంటలు",
+  "save_schedule": "షెడ్యూల్ సేవ్ చేయండి",
+  "monday": "సోమవారం",
+  "tuesday": "మంగళవారం",
+  "wednesday": "బుధవారం",
+  "thursday": "గురువారం",
+  "friday": "శుక్రవారం",
+  "saturday": "శనివారం",
+  "sunday": "ఆదివారం",
+
+  "onboarding_title": "సేవాదారు సెటప్",
+  "onboarding_profile": "ప్రొఫైల్ సెటప్",
+  "onboarding_services": "సేవలు & ధరలు",
+  "onboarding_schedule": "పని సమయం",
+  "onboarding_finish": "ముగించండి",
+
+  "profile_setup": "ప్రొఫైల్ సెటప్",
+  "profile_setup_subtitle": "మీ ప్రాథమిక వివరాలు పూర్తి చేయండి",
+
+  "services_pricing": "సేవలు & ధరలు",
+  "services_pricing_subtitle": "మీరు అందించే సేవలను ఎంచుకోండి",
+
+  "working_schedule": "పని షెడ్యూల్",
+  "working_schedule_subtitle": "మీ పని షెడ్యూల్‌ను సెట్ చేయండి",
+
+  "onboarding_complete": "సెటప్ పూర్తైంది",
+  "onboarding_complete_subtitle": "మీ సేవాదారు ఖాతా ఇప్పుడు పనులకు సిద్ధంగా ఉంది",
+
+  "next": "తరువాత",
+  "back": "వెనక్కి",
+  "finish_setup": "సెటప్ పూర్తిచేయండి",
+
+  "onboarding_services_subtitle": "మీరు అందించే సేవలను ఎంచుకోండి",
+  "service_ac_repair": "ఏసీ రిపేర్",
+  "service_home_cleaning": "హోమ్ క్లీనింగ్",
+
+  "hi": "హాయ్",
+  "logout": "లాగ్ అవుట్",
+  "search_services": "సేవలను వెతకండి",
+  "provider_dashboard_title": "సేవాదారు నియంత్రణ కేంద్రం",
+  "provider_dashboard_subtitle": "మీ వ్యాపారంపై ప్రత్యక్ష అవలోకనం",
+
+  "provider_new_requests": "కొత్త అభ్యర్థనలు",
+  "provider_active_jobs": "సక్రియ పనులు",
+  "provider_todays_earnings": "ఈరోజు ఆదాయం",
+  "provider_completion_rate": "పూర్తి రేటు",
+
+  "provider_view_requests": "వచ్చిన అభ్యర్థనలు చూడండి",
+  "provider_manage_jobs": "సక్రియ పనులను నిర్వహించండి",
+  "provider_manage_schedule": "పని షెడ్యూల్ నిర్వహించండి",
+  "provider_view_earnings": "ఆదాయం చూడండి",
+  "provider_today_earnings": "ఈరోజు ఆదాయం"
+
+}
