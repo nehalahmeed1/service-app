@@ -13,13 +13,19 @@ const app = express();
 
 connectDB();
 
-app.use(cors({ origin: "http://localhost:4028", credentials: true }));
+app.use(
+  cors({
+    origin: "http://localhost:4028",
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 // Auth
 app.use("/api", adminAuthRoutes);
 
-// Feature modules (NO COLLISION)
+// Feature modules
 app.use("/api/admin/categories", categoryRoutes);
 app.use("/api/admin/sub-categories", subCategoryRoutes);
 

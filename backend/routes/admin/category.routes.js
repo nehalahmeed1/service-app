@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const authMiddleware = require("../../middleware/authMiddleware");
 
 const {
   createCategory,
@@ -8,17 +9,18 @@ const {
   updateCategory,
   deleteCategory,
   toggleCategoryStatus,
-} = require("../../controllers/admin/category.controller"); // ✅ FIXED
+} = require("../../controllers/admin/category.controller");
 
-const authMiddleware = require("../../middleware/authMiddleware");
+/**
+ * BASE PATH:
+ * /api/admin/categories
+ */
 
-/* ================= CATEGORY ROUTES ================= */
-
-router.post("/categories", authMiddleware, createCategory);
-router.get("/categories", authMiddleware, getCategories);
-router.get("/categories/:id", authMiddleware, getCategoryById);
-router.put("/categories/:id", authMiddleware, updateCategory);
-router.delete("/categories/:id", authMiddleware, deleteCategory);
-router.patch("/categories/:id/status", authMiddleware, toggleCategoryStatus);
+router.post("/", authMiddleware, createCategory);
+router.get("/", authMiddleware, getCategories);
+router.get("/:id", authMiddleware, getCategoryById);
+router.put("/:id", authMiddleware, updateCategory);
+router.delete("/:id", authMiddleware, deleteCategory);
+router.patch("/:id/status", authMiddleware, toggleCategoryStatus);
 
 module.exports = router;

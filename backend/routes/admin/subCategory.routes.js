@@ -11,6 +11,11 @@ const {
   bulkUploadSubCategories,
 } = require("../../controllers/admin/subCategory.controller");
 
+/**
+ * BASE PATH:
+ * /api/admin/sub-categories
+ */
+
 router.get("/", authMiddleware, getSubCategories);
 router.get("/:id", authMiddleware, getSubCategoryById);
 router.post("/", authMiddleware, createSubCategory);
