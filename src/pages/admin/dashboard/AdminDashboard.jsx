@@ -1,60 +1,64 @@
 import { useEffect, useState } from "react";
 import { fetchDashboardStats } from "@/services/dashboardService";
 
+// Components
+import DateFilter from "./components/DateFilter";
+import KpiGrid from "./components/KpiGrid";
+import TrendsChart from "./components/TrendsChart";
+import OperationalStatus from "./components/OperationalStatus";
+import TopCategories from "./components/TopCategories";
+import AlertsPanel from "./components/AlertsPanel";
+import RecentActivity from "./components/RecentActivity";
+
 const AdminDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState("7d");
 
   useEffect(() => {
     fetchDashboardStats()
       .then((res) => setData(res.data))
+      .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, []);
+  }, [range]);
 
   if (loading) {
-    return <p className="p-6">Loading dashboard...</p>;
+    return <div className="p-6">Loading dashboard...</div>;
+  }
+
+  if (!data) {
+    return <div className="p-6 text-red-600">Failed to load dashboard</div>;
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">📊 Admin Dashboard</h1>
-
-      {/* KPI CARDS */}
-      <div className="grid grid-cols-4 gap-4">
-        <KpiCard title="Total Bookings" value={data.kpis.totalBookings} />
-        <KpiCard title="Revenue" value={`₹${data.kpis.totalRevenue}`} />
-        <KpiCard title="Active Providers" value={data.kpis.activeProviders} />
-        <KpiCard title="Active Customers" value={data.kpis.activeCustomers} />
+    <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">
+          📊 Admin Dashboard
+        </h1>
+        <DateFilter value={range} onChange={setRange} />
       </div>
 
-      {/* JOB STATUS */}
-      <div>
-        <h2 className="font-semibold text-lg">Operational Status</h2>
-        <ul className="list-disc ml-6">
-          {data.jobStatus.map((item) => (
-            <li key={item._id}>
-              {item._id}: {item.count}
-            </li>
-          ))}
-        </ul>
+      {/* KPI GRID */}
+      <KpiGrid data={data} />
+
+      {/* TRENDS */}
+      <TrendsChart />
+
+      {/* MID SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <OperationalStatus />
+        <TopCategories />
       </div>
 
-      {/* ALERTS */}
-      <div>
-        <h2 className="font-semibold text-lg">⚠️ Alerts</h2>
-        <p>Pending Providers: {data.alerts.pendingProviders}</p>
-        <p>Pending Categories: {data.alerts.pendingCategoryChanges}</p>
-        <p>Failed Payments: {data.alerts.failedPayments}</p>
+      {/* BOTTOM SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AlertsPanel />
+        <RecentActivity />
       </div>
     </div>
   );
 };
-
-const KpiCard = ({ title, value }) => (
-  <div className="bg-white shadow rounded p-4">
-    <p className="text-gray-500">{title}</p>
-    <p className="text-2xl font-bold">{value}</p>
-  </div>
-);
 
 export default AdminDashboard;
