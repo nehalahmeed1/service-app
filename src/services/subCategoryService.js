@@ -1,58 +1,63 @@
-import api from "./api";
+import api from "@/utils/api";
 
 /* =====================================================
-   FETCH SUB-CATEGORIES (LIST)
-   Supports: search, status, page, limit
+   SUB-CATEGORIES
 ===================================================== */
-export const fetchSubCategories = async (params) => {
+
+/**
+ * Fetch sub-categories (list)
+ * Supports: search, status, page, limit
+ */
+export const fetchSubCategories = async (params = {}) => {
   const res = await api.get("/admin/sub-categories", { params });
   return res.data;
 };
 
-/* =====================================================
-   FETCH SINGLE SUB-CATEGORY (EDIT PAGE)
-===================================================== */
+/**
+ * Fetch single sub-category (edit page)
+ */
 export const fetchSubCategoryById = async (id) => {
   const res = await api.get(`/admin/sub-categories/${id}`);
   return res.data;
 };
 
-/* =====================================================
-   CREATE SUB-CATEGORY
-===================================================== */
+/**
+ * Create sub-category
+ */
 export const createSubCategory = async (data) => {
   const res = await api.post("/admin/sub-categories", data);
   return res.data;
 };
 
-/* =====================================================
-   UPDATE SUB-CATEGORY (NAME ONLY)
-===================================================== */
+/**
+ * Update sub-category
+ */
 export const updateSubCategory = async (id, data) => {
   const res = await api.put(`/admin/sub-categories/${id}`, data);
   return res.data;
 };
 
-/* =====================================================
-   TOGGLE STATUS (ACTIVE / INACTIVE)
-===================================================== */
+/**
+ * Toggle sub-category status (ACTIVE / INACTIVE)
+ */
 export const toggleSubCategoryStatus = async (id) => {
-  const res = await api.patch(`/admin/sub-categories/${id}/status`);
+  const res = await api.patch(
+    `/admin/sub-categories/${id}/toggle-status`
+  );
   return res.data;
 };
 
-/* =====================================================
-   DELETE SUB-CATEGORY (SOFT DELETE)
-===================================================== */
+/**
+ * Delete sub-category (soft delete)
+ */
 export const deleteSubCategory = async (id) => {
   const res = await api.delete(`/admin/sub-categories/${id}`);
   return res.data;
 };
 
-/* =====================================================
-   BULK UPLOAD SUB-CATEGORIES (EXCEL)
-   Endpoint: POST /api/admin/sub-categories/bulk-upload
-===================================================== */
+/**
+ * Bulk upload sub-categories (Excel)
+ */
 export const bulkUploadSubCategories = async (formData) => {
   const res = await api.post(
     "/admin/sub-categories/bulk-upload",

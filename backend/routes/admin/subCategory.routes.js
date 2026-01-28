@@ -9,6 +9,7 @@ const {
   updateSubCategory,
   deleteSubCategory,
   bulkUploadSubCategories,
+  toggleSubCategoryStatus, // ✅ ADD
 } = require("../../controllers/admin/subCategory.controller");
 
 /**
@@ -20,6 +21,14 @@ router.get("/", authMiddleware, getSubCategories);
 router.get("/:id", authMiddleware, getSubCategoryById);
 router.post("/", authMiddleware, createSubCategory);
 router.put("/:id", authMiddleware, updateSubCategory);
+
+// ✅ TOGGLE STATUS (ON / OFF)
+router.patch(
+  "/:id/toggle-status",
+  authMiddleware,
+  toggleSubCategoryStatus
+);
+
 router.delete("/:id", authMiddleware, deleteSubCategory);
 router.post("/bulk-upload", authMiddleware, bulkUploadSubCategories);
 

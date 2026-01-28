@@ -19,19 +19,19 @@ import EditCategory from "./pages/admin/categories/EditCategory";
 /* ================= ADMIN SUB-CATEGORIES ================= */
 import SubCategories from "./pages/admin/subCategories/SubCategories";
 import CreateSubCategory from "./pages/admin/subCategories/CreateSubCategory";
-import EditSubCategory from "./pages/admin/subCategories/EditSubCategory"; // ✅ ADDED
+import EditSubCategory from "./pages/admin/subCategories/EditSubCategory";
 
 /* ================= REGISTER FORMS ================= */
 import CustomerRegister from "./pages/register/customer";
 import ProviderRegister from "./pages/register/provider";
 
-/* ================= CUSTOMER PAGES ================= */
+/* ================= CUSTOMER ================= */
 import ServiceProviderSearch from "./pages/service-provider-search";
 import ServiceProviderProfile from "./pages/service-provider-profile";
 import CustomerProfile from "./pages/customer-profile";
 import EditCustomerProfile from "./pages/customer-profile/edit";
 
-/* ================= PROVIDER PAGES ================= */
+/* ================= PROVIDER ================= */
 import ProviderDashboard from "./pages/provider-dashboard";
 import ProviderProfile from "./pages/provider-profile";
 import EditProviderProfile from "./pages/provider-profile/edit";
@@ -67,30 +67,29 @@ export default function App() {
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/admin/register" element={<AdminRegister />} />
 
-      {/* ================= ADMIN PROTECTED ================= */}
+      {/* ================= ADMIN (PROTECTED) ================= */}
       <Route path="/admin" element={<AdminAuthGuard />}>
         <Route element={<AdminLayout />}>
+          {/* /admin → /admin/dashboard */}
           <Route index element={<Navigate to="dashboard" replace />} />
 
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="approvals" element={<AdminApprovalPage />} />
 
-          {/* CATEGORY MODULE */}
+          {/* Categories */}
           <Route path="categories" element={<Categories />} />
           <Route path="categories/create" element={<CreateCategory />} />
           <Route path="categories/:id/edit" element={<EditCategory />} />
 
-          {/* SUB-CATEGORY MODULE ✅ */}
+          {/* Sub-Categories */}
           <Route path="sub-categories" element={<SubCategories />} />
-          <Route
-            path="sub-categories/create"
-            element={<CreateSubCategory />}
-          />
+          <Route path="sub-categories/create" element={<CreateSubCategory />} />
           <Route
             path="sub-categories/:id/edit"
             element={<EditSubCategory />}
-          /> {/* ✅ ADDED */}
+          />
 
+          {/* Placeholders for future */}
           <Route path="providers" element={<div>Providers</div>} />
           <Route path="customers" element={<div>Customers</div>} />
           <Route path="reports" element={<div>Reports</div>} />
@@ -185,7 +184,7 @@ export default function App() {
         </Route>
       </Route>
 
-      {/* ================= ROOT ================= */}
+      {/* ================= ROOT & FALLBACK ================= */}
       <Route path="/" element={<AuthRedirect />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

@@ -56,11 +56,12 @@ export const fetchSubCategoryById = async (id) => {
    CATEGORIES (for dropdown)
 ====================================================== */
 
+
 /**
- * Fetch categories (used in sub-category dropdown)
- * @param {Object} params
+ * Fetch categories (used for dropdown & listing)
  */
 export const fetchCategories = async (params = {}) => {
   const res = await api.get("/admin/categories", { params });
   return res.data;
 };
+

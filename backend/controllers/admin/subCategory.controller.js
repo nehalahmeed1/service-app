@@ -63,6 +63,7 @@ exports.getSubCategories = async (req, res) => {
       meta: { total, page, limit, pages: Math.ceil(total / limit) },
     });
   } catch (err) {
+    console.error("Get sub-categories error:", err);
     res.status(500).json({ message: "Failed to fetch sub-categories" });
   }
 };
@@ -122,6 +123,34 @@ exports.updateSubCategory = async (req, res) => {
   await subCategory.save();
 
   res.json({ data: subCategory });
+};
+
+/* ================= TOGGLE STATUS (✅ ADDED) ================= */
+
+exports.toggleSubCategoryStatus = async (req, res) => {
+  try {
+    const subCategory = await SubCategory.findOne({
+      _id: req.params.id,
+      ...notDeletedQuery,
+    });
+
+    if (!subCategory)
+      return res.status(404).json({ message: "Sub-category not found" });
+
+    subCategory.status =
+      subCategory.status === "active" ? "inactive" : "active";
+
+    subCategory.updatedBy = req.admin._id;
+    await subCategory.save();
+
+    res.json({
+      message: "Sub-category status updated successfully",
+      status: subCategory.status,
+    });
+  } catch (err) {
+    console.error("Toggle sub-category status error:", err);
+    res.status(500).json({ message: "Failed to toggle status" });
+  }
 };
 
 /* ================= DELETE (SOFT) ================= */
