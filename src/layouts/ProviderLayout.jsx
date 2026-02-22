@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import ProviderHeader from "@/layouts/components/ProviderHeader";
 import ProviderSubHeader from "@/layouts/components/ProviderSubHeader";
+import ProviderRail from "@/layouts/components/ProviderRail";
 
 export default function ProviderLayout() {
   return (
@@ -17,8 +18,13 @@ export default function ProviderLayout() {
 
       {/* Scrollable page area */}
       <main className="flex-1 overflow-y-auto bg-background">
-        <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-16 2xl:px-24 py-6">
-          <Outlet />
+        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-16 py-6">
+          <div className="flex items-start gap-6">
+            <ProviderRail />
+            <div className="min-w-0 flex-1">
+              <Outlet />
+            </div>
+          </div>
         </div>
       </main>
     </div>

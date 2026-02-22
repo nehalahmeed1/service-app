@@ -1,13 +1,22 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 export default function AdminAuthGuard() {
+  const location = useLocation();
   const token = localStorage.getItem("admin_token");
+  const hasValidToken =
+    !!token && token !== "undefined" && token !== "null";
 
-  // ❌ Not logged in
-  if (!token) {
-    return <Navigate to="/admin/login" replace />;
+  // 🔒 If no admin token → redirect to login
+  if (!hasValidToken) {
+    return (
+      <Navigate
+        to="/admin/login"
+        state={{ from: location }}
+        replace
+      />
+    );
   }
 
-  // ✅ Logged in → allow all admin pages
+  // ✅ Token exists → allow access
   return <Outlet />;
 }

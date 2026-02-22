@@ -1,67 +1,43 @@
-import api from "./api";
+import api from "./providerApi";
 
 /* ======================================================
-   SUB-CATEGORIES
+   PUBLIC – PROVIDER / CUSTOMER
 ====================================================== */
 
 /**
- * Fetch sub-categories (with pagination, search, status)
- * @param {Object} params
+ * Fetch ACTIVE categories (provider onboarding, filters)
+ * GET /api/categories
  */
-export const fetchSubCategories = async (params = {}) => {
-  const res = await api.get("/admin/sub-categories", { params });
-  return res.data;
-};
-
-/**
- * Create new sub-category
- * @param {Object} data
- */
-export const createSubCategory = async (data) => {
-  const res = await api.post("/admin/sub-categories", data);
-  return res.data;
-};
-
-/**
- * Update sub-category
- * @param {String} id
- * @param {Object} data
- */
-export const updateSubCategory = async (id, data) => {
-  const res = await api.put(`/admin/sub-categories/${id}`, data);
-  return res.data;
-};
-
-/**
- * Toggle sub-category status (active / inactive)
- * @param {String} id
- */
-export const toggleSubCategoryStatus = async (id) => {
-  const res = await api.patch(
-    `/admin/sub-categories/${id}/toggle-status`
-  );
-  return res.data;
-};
-
-/**
- * Fetch single sub-category by ID (for edit)
- * @param {String} id
- */
-export const fetchSubCategoryById = async (id) => {
-  const res = await api.get(`/admin/sub-categories/${id}`);
-  return res.data;
+export const fetchPublicCategories = async () => {
+  const res = await api.get("/categories");
+  return res.data.data || []; // ✅ always array
 };
 
 /* ======================================================
-   CATEGORIES (for dropdown)
+   ADMIN – CATEGORY MANAGEMENT
 ====================================================== */
 
-
-/**
- * Fetch categories (used for dropdown & listing)
- */
 export const fetchCategories = async (params = {}) => {
   const res = await api.get("/admin/categories", { params });
   return res.data;
 };
 
+export const createCategory = async (data) => {
+  const res = await api.post("/admin/categories", data);
+  return res.data;
+};
+
+export const updateCategory = async (id, data) => {
+  const res = await api.put(`/admin/categories/${id}`, data);
+  return res.data;
+};
+
+export const fetchCategoryById = async (id) => {
+  const res = await api.get(`/admin/categories/${id}`);
+  return res.data;
+};
+
+export const toggleCategoryStatus = async (id, status) => {
+  const res = await api.put(`/admin/categories/${id}`, { status });
+  return res.data;
+};

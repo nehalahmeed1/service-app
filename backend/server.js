@@ -1,18 +1,8 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
-
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 const connectDB = require("./config/db");
-
-// =======================
-// ROUTES IMPORTS
-// =======================
-const adminAuthRoutes = require("./routes/adminAuthRoutes");
-const adminManagementRoutes = require("./routes/adminManagementRoutes");
-
-const categoryRoutes = require("./routes/admin/category.routes");
-const subCategoryRoutes = require("./routes/admin/subCategory.routes");
-const adminDashboardRoutes = require("./routes/admin/adminDashboard.routes");
 
 const app = express();
 
@@ -22,8 +12,16 @@ const app = express();
 connectDB();
 
 // =======================
-// MIDDLEWARE
+// MIDDLEWARE (ORDER MATTERS)
 // =======================
+
+// Parse JSON bodies
+app.use(express.json());
+
+// Parse form-data (required for multer text fields)
+app.use(express.urlencoded({ extended: true }));
+
+// CORS
 app.use(
   cors({
     origin: "http://localhost:4028",
@@ -31,21 +29,60 @@ app.use(
   })
 );
 
-app.use(express.json());
+// =======================
+// SERVE UPLOADED FILES
+// =======================
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "uploads"))
+);
 
 // =======================
-// ROUTES
+// ROUTES IMPORTS
 // =======================
 
-// Auth (login / register)
+// AUTH
+const authRoutes = require("./routes/auth.routes");
+
+// ADMIN AUTH / MGMT
+const adminAuthRoutes = require("./routes/adminAuthRoutes");
+const adminManagementRoutes = require("./routes/adminManagementRoutes");
+
+// ADMIN MODULES
+const categoryRoutes = require("./routes/admin/category.routes");
+const subCategoryRoutes = require("./routes/admin/subCategory.routes");
+const adminDashboardRoutes = require("./routes/admin/adminDashboard.routes");
+const adminApprovalRoutes = require("./routes/admin/adminApproval.routes");
+
+// PROVIDER ONBOARDING
+const providerOnboardingRoutes = require("./routes/provider/onboarding.routes");
+
+// PUBLIC
+const publicCategoryRoutes = require("./routes/categories.public.routes");
+
+// =======================
+// ROUTES REGISTRATION
+// =======================
+
+// PROVIDER ONBOARDING
+app.use("/api/provider", providerOnboardingRoutes);
+
+// PUBLIC ROUTES
+app.use("/api/categories", publicCategoryRoutes);
+
+// AUTH
+app.use("/api/auth", authRoutes);
 app.use("/api", adminAuthRoutes);
 
-// Admin modules (SPECIFIC FIRST)
+// ADMIN MODULES (specific first)
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/admin/categories", categoryRoutes);
 app.use("/api/admin/sub-categories", subCategoryRoutes);
 
-// Generic admin routes (KEEP LAST)
+// ADMIN APPROVALS
+app.use("/api/admin/approvals", adminApprovalRoutes);
+
+// ADMIN GENERIC (KEEP LAST)
 app.use("/api/admin", adminManagementRoutes);
 
 // =======================

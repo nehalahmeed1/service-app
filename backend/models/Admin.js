@@ -4,28 +4,28 @@ const adminSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true
+      required: true,
     },
     email: {
       type: String,
       required: true,
       unique: true,
-      lowercase: true
+      lowercase: true,
     },
     password: {
       type: String,
-      required: true
+      required: true, // kept required (dummy password handled in controller)
     },
     role: {
       type: String,
       enum: ["ADMIN", "SUPER_ADMIN"],
-      default: "ADMIN"
+      default: "ADMIN",
     },
     status: {
       type: String,
       enum: ["PENDING", "APPROVED", "REJECTED"],
-      default: "PENDING"
-    }
+      default: "PENDING",
+    },
   },
   { timestamps: true }
 );

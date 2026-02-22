@@ -86,6 +86,33 @@ export default function ProviderHeader() {
             {open && (
               <div className="absolute right-0 top-12 w-44 rounded-lg border bg-white shadow-lg text-sm z-50">
                 <button
+                  onClick={() => {
+                    setOpen(false);
+                    navigate("/provider/profile");
+                  }}
+                  className="px-4 py-2 w-full text-left hover:bg-gray-100"
+                >
+                  My Profile
+                </button>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    navigate("/provider/verification-center");
+                  }}
+                  className="px-4 py-2 w-full text-left hover:bg-gray-100"
+                >
+                  Verification Center
+                </button>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    navigate("/provider/kpi");
+                  }}
+                  className="px-4 py-2 w-full text-left hover:bg-gray-100"
+                >
+                  KPI Analytics
+                </button>
+                <button
                   onClick={handleLogout}
                   className="px-4 py-2 w-full text-left text-red-600 hover:bg-gray-100"
                 >

@@ -2,10 +2,10 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function RoleRoute({ allowedRole, children }) {
-  const { user, userData, loading } = useAuth();
+  const { user, role, loading, providerOnboardingCompleted } = useAuth();
 
-  // ⏳ Wait until auth + userData is ready
-  if (loading || !userData) {
+  // ⏳ Wait until auth is ready
+  if (loading) {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
         Checking permissions…
@@ -13,23 +13,44 @@ export default function RoleRoute({ allowedRole, children }) {
     );
   }
 
-  // ❌ Not logged in (extra safety)
+  // ❌ Not logged in
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // ❌ Wrong role → redirect to correct area
-  if (userData.role !== allowedRole) {
-    if (userData.role === "customer") {
+  // Wait for role bootstrap to avoid redirecting to login right after register/login.
+  if (!role) {
+    return (
+      <div style={{ padding: 40, textAlign: "center" }}>
+        Setting up your account...
+      </div>
+    );
+  }
+
+  // ❌ Wrong role → redirect properly
+  if (role !== allowedRole) {
+    if (role === "CUSTOMER") {
       return <Navigate to="/customer/home" replace />;
     }
 
-    if (userData.role === "provider") {
-      return <Navigate to="/provider/dashboard" replace />;
+    if (role === "PROVIDER") {
+      return (
+        <Navigate
+          to={
+            providerOnboardingCompleted
+              ? "/provider/dashboard"
+              : "/provider/onboarding"
+          }
+          replace
+        />
+      );
     }
 
-    // fallback
-    return <Navigate to="/" replace />;
+    if (role === "ADMIN" || role === "SUPER_ADMIN") {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+
+    return <Navigate to="/login" replace />;
   }
 
   // ✅ Correct role

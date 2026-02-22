@@ -2,13 +2,16 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
+import axios from "axios";
+
 import { auth, db } from "@/firebase";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslation } from "react-i18next";
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export default function CustomerRegister() {
   const navigate = useNavigate();
-
   const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
 
@@ -31,6 +34,7 @@ export default function CustomerRegister() {
     try {
       setLoading(true);
 
+      /* 1️⃣ Firebase Authentication */
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         form.email,
@@ -39,6 +43,7 @@ export default function CustomerRegister() {
 
       const uid = userCredential.user.uid;
 
+      /* 2️⃣ Firestore User Profile */
       await setDoc(doc(db, "users", uid), {
         name: form.name,
         email: form.email,
@@ -47,9 +52,18 @@ export default function CustomerRegister() {
         createdAt: new Date(),
       });
 
+      /* 3️⃣ 🔁 Sync Customer to MongoDB */
+      await axios.post(`${API_BASE_URL}/auth/customer/register`, {
+        firebaseUid: uid,
+        name: form.name,
+        email: form.email,
+      });
+
+      /* 4️⃣ Redirect */
       navigate("/customer/home", { replace: true });
     } catch (error) {
-      alert(error.message);
+      console.error("Customer register error:", error);
+      alert(error?.response?.data?.message || error.message || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -93,23 +107,23 @@ export default function CustomerRegister() {
 
         <input
           style={styles.input}
-          placeholder={t("email")}
+          placeholder={t("email") || "Email"}
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
 
         <input
           style={styles.input}
-          placeholder={t("phoneNumber") || t("mobile")}
+          placeholder={t("phoneNumber") || "Phone"}
           value={form.phone}
           onChange={(e) => setForm({ ...form, phone: e.target.value })}
         />
 
-        {/* 🔐 PASSWORD FIELD — FINAL FIX */}
+        {/* 🔐 Password */}
         <div style={styles.passwordWrapper}>
           <input
             type={showPassword ? "text" : "password"}
-            placeholder={t("password")}
+            placeholder={t("password") || "Password"}
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             style={styles.passwordInput}
@@ -132,7 +146,7 @@ export default function CustomerRegister() {
         </button>
 
         <button style={styles.link} onClick={() => navigate("/register")}>
-          {t("back")}
+          {t("back") || "Back"}
         </button>
       </div>
     </div>
@@ -170,23 +184,19 @@ const styles = {
     borderRadius: 6,
     border: "1px solid #cbd5e1",
     fontSize: 14,
-    lineHeight: "44px",
     boxSizing: "border-box",
   },
-
-  /* 🔐 PASSWORD — BULLETPROOF FIX */
   passwordWrapper: {
     position: "relative",
     marginBottom: 12,
   },
   passwordInput: {
     width: "100%",
-    height: 44,                 // 🔒 locked height
-    padding: "0 44px 0 12px",   // space for eye
+    height: 44,
+    padding: "0 44px 0 12px",
     borderRadius: 6,
     border: "1px solid #cbd5e1",
     fontSize: 14,
-    lineHeight: "44px",         // 🔒 match height
     boxSizing: "border-box",
   },
   eye: {
@@ -195,7 +205,7 @@ const styles = {
     right: 0,
     height: "100%",
     width: 44,
-    display: "flex",            // 🔒 perfect centering
+    display: "flex",
     alignItems: "center",
     justifyContent: "center",
     background: "transparent",
@@ -203,7 +213,6 @@ const styles = {
     cursor: "pointer",
     fontSize: 16,
   },
-
   btn: {
     width: "100%",
     padding: 12,

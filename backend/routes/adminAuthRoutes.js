@@ -1,20 +1,25 @@
 const express = require("express");
 const router = express.Router();
 
+// ✅ CORRECT PATH (file is NOT inside /admin folder)
 const {
   registerAdmin,
   loginAdmin,
 } = require("../controllers/adminAuthController");
 
 /**
- * Admin Auth Routes
- * (Adjusted to match frontend API calls)
+ * BASE PATH:
+ * /api
+ *
+ * FULL ENDPOINTS:
+ * POST /api/admin/auth/register
+ * POST /api/admin/auth/login
  */
 
-// LOGIN
-router.post("/admin/auth/login", loginAdmin);
-
-// REGISTER
+// Register
 router.post("/admin/auth/register", registerAdmin);
+
+// Login
+router.post("/admin/auth/login", loginAdmin);
 
 module.exports = router;

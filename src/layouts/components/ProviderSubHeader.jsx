@@ -8,6 +8,12 @@ const titles = {
   "/provider/earnings": "My Earnings",
   "/provider/performance": "Performance",
   "/provider/schedule": "My Schedule",
+  "/provider/verification-center": "Verification Center",
+  "/provider/verification-history": "Verification History",
+  "/provider/profile": "My Profile",
+  "/provider/profile/edit": "Edit Profile",
+  "/provider/kpi": "KPI Analytics",
+  "/provider/growth-hub": "Growth Hub",
 };
 
 export default function ProviderSubHeader() {

@@ -1,25 +1,29 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ProviderOnboardingGuard() {
-  const { user, userData, loading } = useAuth();
+  const { user, role, loading, providerOnboardingCompleted } = useAuth();
+  const location = useLocation();
 
-  // ⛔ Wait until auth + Firestore userData is fully loaded
   if (loading) return null;
 
-  // ⛔ Safety: if auth vanished, go login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
 
-  // ⛔ If userData missing, block rendering
-  if (!userData) return null;
+  if (role !== "PROVIDER") {
+    return <Navigate to="/" replace />;
+  }
 
-  // 🔒 If onboarding NOT completed → force onboarding page
-  if (userData.role === "provider" && !userData.onboardingCompleted) {
+  // Allow onboarding always
+  if (location.pathname.startsWith("/provider/onboarding")) {
+    return <Outlet />;
+  }
+
+  // Block provider home modules until onboarding is submitted
+  if (!providerOnboardingCompleted) {
     return <Navigate to="/provider/onboarding" replace />;
   }
 
-  // ✅ Onboarding completed → allow provider routes
   return <Outlet />;
 }

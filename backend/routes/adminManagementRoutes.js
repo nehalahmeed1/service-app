@@ -1,25 +1,25 @@
 const express = require("express");
 const router = express.Router();
 
-const authMiddleware = require("../middleware/authMiddleware");
+const adminAuthMiddleware = require("../middleware/adminAuthMiddleware");
 const superAdminOnly = require("../middleware/superAdminOnly");
 
 const {
   getPendingAdmins,
   approveAdmin,
-  rejectAdmin
+  rejectAdmin,
 } = require("../controllers/adminManageController");
 
 /**
- * ================================
+ * ==========================================
  * SUPER ADMIN – ADMIN APPROVAL APIs
- * ================================
+ * ==========================================
  */
 
 // Get all pending admins
 router.get(
   "/pending",
-  authMiddleware,
+  adminAuthMiddleware,
   superAdminOnly,
   getPendingAdmins
 );
@@ -27,7 +27,7 @@ router.get(
 // Approve an admin
 router.patch(
   "/approve/:id",
-  authMiddleware,
+  adminAuthMiddleware,
   superAdminOnly,
   approveAdmin
 );
@@ -35,7 +35,7 @@ router.patch(
 // Reject an admin
 router.patch(
   "/reject/:id",
-  authMiddleware,
+  adminAuthMiddleware,
   superAdminOnly,
   rejectAdmin
 );

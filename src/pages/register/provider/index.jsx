@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/firebase";
+import axios from "axios";
 
+import { auth } from "@/firebase";
 import { useLanguage } from "@/context/LanguageContext";
 import { useTranslation } from "react-i18next";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function ProviderRegister() {
   const navigate = useNavigate();
@@ -13,7 +15,7 @@ export default function ProviderRegister() {
   const { language, setLanguage } = useLanguage();
   const { t, i18n } = useTranslation();
 
-  // keep i18n in sync
+  /* keep i18n in sync */
   useEffect(() => {
     if (i18n.language !== language) {
       i18n.changeLanguage(language);
@@ -48,6 +50,7 @@ export default function ProviderRegister() {
     try {
       setLoading(true);
 
+      /* 1️⃣ Firebase Authentication */
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         form.email,
@@ -56,20 +59,30 @@ export default function ProviderRegister() {
 
       const uid = userCredential.user.uid;
 
-      await setDoc(doc(db, "users", uid), {
+      /* 2️⃣ Sync Provider to MongoDB (Admin Approval Flow) */
+      await axios.post(`${API_BASE_URL}/auth/provider/register`, {
+        firebaseUid: uid,
         name: form.name,
         email: form.email,
-        phone: form.phone,
         service: form.service,
         location: form.location,
-        role: "provider",
-        onboardingCompleted: false,
-        createdAt: new Date(),
+        phone: form.phone,
       });
 
-      navigate("/provider/onboarding", { replace: true });
+      /* 3️⃣ Redirect to onboarding */
+      navigate("/provider/onboarding", {
+        replace: true,
+        state: { fromRegistration: true },
+      });
+
     } catch (error) {
-      alert(error.message);
+      console.error("Provider register error:", error);
+
+      alert(
+        error?.response?.data?.message ||
+          error.message ||
+          "Registration failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -78,7 +91,7 @@ export default function ProviderRegister() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        {/* 🌐 LANGUAGE SWITCH */}
+        {/* 🌐 Language Switch */}
         <div style={{ textAlign: "right", marginBottom: 10 }}>
           <button
             onClick={() => setLanguage("en")}
@@ -113,14 +126,14 @@ export default function ProviderRegister() {
 
         <input
           style={styles.input}
-          placeholder={t("email")}
+          placeholder={t("email") || "Email"}
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
 
         <input
           style={styles.input}
-          placeholder={t("service")}
+          placeholder={t("service") || "Service"}
           value={form.service}
           onChange={(e) => setForm({ ...form, service: e.target.value })}
         />
@@ -134,16 +147,16 @@ export default function ProviderRegister() {
 
         <input
           style={styles.input}
-          placeholder={t("mobile")}
+          placeholder={t("mobile") || "Phone"}
           value={form.phone}
           onChange={(e) => setForm({ ...form, phone: e.target.value })}
         />
 
-        {/* 🔐 PASSWORD — FINAL FIX */}
+        {/* 🔐 Password */}
         <div style={styles.passwordWrapper}>
           <input
             type={showPassword ? "text" : "password"}
-            placeholder={t("password")}
+            placeholder={t("password") || "Password"}
             value={form.password}
             onChange={(e) =>
               setForm({ ...form, password: e.target.value })
@@ -168,7 +181,7 @@ export default function ProviderRegister() {
         </button>
 
         <button style={styles.link} onClick={() => navigate("/register")}>
-          {t("back")}
+          {t("back") || "Back"}
         </button>
       </div>
     </div>
@@ -206,11 +219,8 @@ const styles = {
     borderRadius: 6,
     border: "1px solid #cbd5e1",
     fontSize: 14,
-    lineHeight: "44px",
     boxSizing: "border-box",
   },
-
-  /* 🔐 PASSWORD — BULLETPROOF ALIGNMENT */
   passwordWrapper: {
     position: "relative",
     marginBottom: 12,
@@ -222,7 +232,6 @@ const styles = {
     borderRadius: 6,
     border: "1px solid #cbd5e1",
     fontSize: 14,
-    lineHeight: "44px",
     boxSizing: "border-box",
   },
   eye: {
@@ -239,7 +248,6 @@ const styles = {
     cursor: "pointer",
     fontSize: 16,
   },
-
   btn: {
     width: "100%",
     padding: 12,

@@ -1,13 +1,12 @@
 import axios from "axios";
 
-// ✅ Vite environment variable
+// Base URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
  * ===============================
  * ADMIN REGISTER
  * ===============================
- * Creates a new admin with status = PENDING
  */
 export const registerAdmin = async (payload) => {
   const response = await axios.post(
@@ -19,14 +18,40 @@ export const registerAdmin = async (payload) => {
 
 /**
  * ===============================
- * ADMIN LOGIN
+ * ADMIN LOGIN (EMAIL/PASSWORD)
  * ===============================
- * Allows only APPROVED admins to login
+ * Used only for manual login (fallback)
  */
 export const loginAdmin = async (payload) => {
   const response = await axios.post(
     `${API_BASE_URL}/admin/auth/login`,
     payload
   );
+
+  // store admin token
+  if (response.data?.token) {
+    localStorage.setItem("admin_token", response.data.token);
+  }
+
+  return response.data;
+};
+
+/**
+ * ===============================
+ * FIREBASE ADMIN LOGIN
+ * ===============================
+ * Used when Firebase auth succeeds
+ */
+export const firebaseAdminLogin = async (firebaseToken) => {
+  const response = await axios.post(
+    `${API_BASE_URL}/auth/firebase-login`,
+    { firebaseToken }
+  );
+
+  // store admin token
+  if (response.data?.token) {
+    localStorage.setItem("admin_token", response.data.token);
+  }
+
   return response.data;
 };

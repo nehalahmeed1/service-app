@@ -12,6 +12,7 @@ import AdminLogin from "./pages/admin/auth/AdminLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/dashboard/AdminDashboard";
 import AdminApprovalPage from "./pages/admin/approvals/AdminApprovalPage";
+import AdminApprovalDetailPage from "./pages/admin/approvals/AdminApprovalDetailPage";
 import Categories from "./pages/admin/categories/Categories";
 import CreateCategory from "./pages/admin/categories/CreateCategory";
 import EditCategory from "./pages/admin/categories/EditCategory";
@@ -21,7 +22,7 @@ import SubCategories from "./pages/admin/subCategories/SubCategories";
 import CreateSubCategory from "./pages/admin/subCategories/CreateSubCategory";
 import EditSubCategory from "./pages/admin/subCategories/EditSubCategory";
 
-/* ================= REGISTER FORMS ================= */
+/* ================= REGISTER ================= */
 import CustomerRegister from "./pages/register/customer";
 import ProviderRegister from "./pages/register/provider";
 
@@ -44,12 +45,16 @@ import ProviderPerformancePage from "@/provider/performance/ProviderPerformanceP
 import ProviderSchedulePage from "@/provider/schedule/ProviderSchedulePage";
 import ProviderServicesPage from "@/provider/services/ProviderServicesPage";
 import ProviderOnboardingPage from "@/provider/onboarding/ProviderOnboardingPage";
+import ProviderVerificationCenterPage from "@/provider/verification/ProviderVerificationCenterPage";
+import ProviderVerificationHistoryPage from "@/provider/verification/ProviderVerificationHistoryPage";
+import ProviderKpiPage from "@/provider/kpi/ProviderKpiPage";
+import ProviderGrowthHubPage from "@/provider/business/ProviderGrowthHubPage";
 
 /* ================= LAYOUTS ================= */
 import MainLayout from "@/layouts/MainLayout";
 import ProviderLayout from "@/layouts/ProviderLayout";
 
-/* ================= ROUTE GUARDS ================= */
+/* ================= GUARDS ================= */
 import ProtectedRoute from "@/routes/ProtectedRoute";
 import RoleRoute from "@/routes/RoleRoute";
 import ProviderOnboardingGuard from "@/routes/ProviderOnboardingGuard";
@@ -70,33 +75,30 @@ export default function App() {
       {/* ================= ADMIN (PROTECTED) ================= */}
       <Route path="/admin" element={<AdminAuthGuard />}>
         <Route element={<AdminLayout />}>
-          {/* /admin → /admin/dashboard */}
           <Route index element={<Navigate to="dashboard" replace />} />
-
           <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="approvals" element={<AdminApprovalPage />} />
 
-          {/* Categories */}
+          <Route path="approvals" element={<AdminApprovalPage />} />
+          <Route
+            path="approvals/:providerId"
+            element={<AdminApprovalDetailPage />}
+          />
+
           <Route path="categories" element={<Categories />} />
           <Route path="categories/create" element={<CreateCategory />} />
           <Route path="categories/:id/edit" element={<EditCategory />} />
 
-          {/* Sub-Categories */}
           <Route path="sub-categories" element={<SubCategories />} />
           <Route path="sub-categories/create" element={<CreateSubCategory />} />
-          <Route
-            path="sub-categories/:id/edit"
-            element={<EditSubCategory />}
-          />
+          <Route path="sub-categories/:id/edit" element={<EditSubCategory />} />
 
-          {/* Placeholders for future */}
           <Route path="providers" element={<div>Providers</div>} />
           <Route path="customers" element={<div>Customers</div>} />
           <Route path="reports" element={<div>Reports</div>} />
         </Route>
       </Route>
 
-      {/* ================= USER REGISTRATION ================= */}
+      {/* ================= REGISTRATION ================= */}
       <Route path="/register/customer" element={<CustomerRegister />} />
       <Route path="/register/provider" element={<ProviderRegister />} />
 
@@ -106,37 +108,40 @@ export default function App() {
           path="/customer/home"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRole="customer">
+              <RoleRoute allowedRole="CUSTOMER">
                 <ServiceProviderSearch />
               </RoleRoute>
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/customer/provider/:providerId"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRole="customer">
+              <RoleRoute allowedRole="CUSTOMER">
                 <ServiceProviderProfile />
               </RoleRoute>
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/customer/profile"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRole="customer">
+              <RoleRoute allowedRole="CUSTOMER">
                 <CustomerProfile />
               </RoleRoute>
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/customer/profile/edit"
           element={
             <ProtectedRoute>
-              <RoleRoute allowedRole="customer">
+              <RoleRoute allowedRole="CUSTOMER">
                 <EditCustomerProfile />
               </RoleRoute>
             </ProtectedRoute>
@@ -144,28 +149,18 @@ export default function App() {
         />
       </Route>
 
-      {/* ================= PROVIDER ================= */}
-      <Route
-        path="/provider/onboarding"
-        element={
-          <ProtectedRoute>
-            <RoleRoute allowedRole="provider">
-              <ProviderOnboardingPage />
-            </RoleRoute>
-          </ProtectedRoute>
-        }
-      />
-
+      {/* ================= PROVIDER DASHBOARD ================= */}
       <Route
         element={
           <ProtectedRoute>
-            <RoleRoute allowedRole="provider">
+            <RoleRoute allowedRole="PROVIDER">
               <ProviderLayout />
             </RoleRoute>
           </ProtectedRoute>
         }
       >
         <Route element={<ProviderOnboardingGuard />}>
+          <Route path="/provider/onboarding" element={<ProviderOnboardingPage />} />
           <Route path="/provider/dashboard" element={<ProviderDashboard />} />
           <Route path="/provider/requests" element={<ProviderRequestsPage />} />
           <Route path="/provider/jobs" element={<ProviderJobsPage />} />
@@ -176,6 +171,16 @@ export default function App() {
           />
           <Route path="/provider/schedule" element={<ProviderSchedulePage />} />
           <Route path="/provider/services" element={<ProviderServicesPage />} />
+          <Route path="/provider/kpi" element={<ProviderKpiPage />} />
+          <Route path="/provider/growth-hub" element={<ProviderGrowthHubPage />} />
+          <Route
+            path="/provider/verification-center"
+            element={<ProviderVerificationCenterPage />}
+          />
+          <Route
+            path="/provider/verification-history"
+            element={<ProviderVerificationHistoryPage />}
+          />
           <Route path="/provider/profile" element={<ProviderProfile />} />
           <Route
             path="/provider/profile/edit"
@@ -184,7 +189,7 @@ export default function App() {
         </Route>
       </Route>
 
-      {/* ================= ROOT & FALLBACK ================= */}
+      {/* ================= ROOT ================= */}
       <Route path="/" element={<AuthRedirect />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

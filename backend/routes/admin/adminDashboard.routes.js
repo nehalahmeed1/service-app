@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../../middleware/authMiddleware");
+
+const adminAuthMiddleware = require("../../middleware/adminAuthMiddleware");
 
 const {
   getAdminDashboardStats,
@@ -11,6 +12,10 @@ const {
  * /api/admin/dashboard
  */
 
-router.get("/", authMiddleware, getAdminDashboardStats);
+router.get(
+  "/",
+  adminAuthMiddleware,
+  getAdminDashboardStats
+);
 
 module.exports = router;

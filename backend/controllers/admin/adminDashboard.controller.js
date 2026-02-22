@@ -3,12 +3,12 @@ const SubCategory = require("../../models/SubCategory");
 
 /**
  * ADMIN DASHBOARD STATS
- * Safe version (no missing models)
+ * SAFE VERSION – uses ONLY existing models
  */
 exports.getAdminDashboardStats = async (req, res) => {
   try {
     // =======================
-    // KPIs (ONLY EXISTING DATA)
+    // COUNTS (REAL DATA)
     // =======================
     const totalCategories = await Category.countDocuments({
       $or: [{ deleted_at: null }, { deleted_at: { $exists: false } }],
@@ -19,14 +19,14 @@ exports.getAdminDashboardStats = async (req, res) => {
     });
 
     // =======================
-    // PLACEHOLDER DATA (SAFE)
+    // RESPONSE (MVP SAFE)
     // =======================
     res.json({
       kpis: {
-        totalBookings: 0,
-        totalRevenue: 0,
-        activeProviders: 0,
-        activeCustomers: 0,
+        totalBookings: 0,          // placeholder
+        totalRevenue: 0,           // placeholder
+        activeProviders: 0,        // placeholder
+        activeCustomers: 0,        // placeholder
         totalCategories,
         totalSubCategories,
       },
@@ -43,6 +43,9 @@ exports.getAdminDashboardStats = async (req, res) => {
         pendingCategoryChanges: 0,
         failedPayments: 0,
       },
+
+      recentActivity: [],      // ready for future
+      topCategories: [],       // ready for future
     });
   } catch (error) {
     console.error("Dashboard error:", error);

@@ -1,5 +1,5 @@
-import api from "./api";
+import adminApi from "./adminApi";
 
 export const fetchDashboardStats = () => {
-  return api.get("/admin/dashboard");
+  return adminApi.get("/admin/dashboard");
 };

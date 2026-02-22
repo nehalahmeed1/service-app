@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../../middleware/authMiddleware");
+
+const adminAuthMiddleware = require("../../middleware/adminAuthMiddleware");
 
 const {
   createCategory,
@@ -16,11 +17,11 @@ const {
  * /api/admin/categories
  */
 
-router.post("/", authMiddleware, createCategory);
-router.get("/", authMiddleware, getCategories);
-router.get("/:id", authMiddleware, getCategoryById);
-router.put("/:id", authMiddleware, updateCategory);
-router.delete("/:id", authMiddleware, deleteCategory);
-router.patch("/:id/status", authMiddleware, toggleCategoryStatus);
+router.post("/", adminAuthMiddleware, createCategory);
+router.get("/", adminAuthMiddleware, getCategories);
+router.get("/:id", adminAuthMiddleware, getCategoryById);
+router.put("/:id", adminAuthMiddleware, updateCategory);
+router.delete("/:id", adminAuthMiddleware, deleteCategory);
+router.patch("/:id/status", adminAuthMiddleware, toggleCategoryStatus);
 
 module.exports = router;

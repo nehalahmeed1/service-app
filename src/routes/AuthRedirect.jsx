@@ -2,38 +2,32 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AuthRedirect() {
-  const { user, userData, loading } = useAuth();
+  const { user, role, loading, providerOnboardingCompleted } = useAuth();
 
-  // ⛔ HARD BLOCK until Firebase + Firestore fully resolved
-  if (loading) {
-    return null;
-  }
+  if (loading) return null;
 
-  // ⛔ ABSOLUTE RULE: not logged in = login only
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!user) return <Navigate to="/login" replace />;
 
-  // ⛔ Logged in but Firestore not ready yet
-  if (!userData) {
-    return null;
-  }
-
-  // ✅ CUSTOMER
-  if (userData.role === "customer") {
+  if (role === "CUSTOMER") {
     return <Navigate to="/customer/home" replace />;
   }
 
-  // ✅ PROVIDER
-  if (userData.role === "provider") {
-    // 🔒 Firestore is the ONLY source of truth
-    if (userData.onboardingCompleted === false) {
-      return <Navigate to="/provider/onboarding" replace />;
-    }
-
-    return <Navigate to="/provider/dashboard" replace />;
+  if (role === "PROVIDER") {
+    return (
+      <Navigate
+        to={
+          providerOnboardingCompleted
+            ? "/provider/dashboard"
+            : "/provider/onboarding"
+        }
+        replace
+      />
+    );
   }
 
-  // Fallback safety
+  if (role === "ADMIN" || role === "SUPER_ADMIN") {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
   return <Navigate to="/login" replace />;
 }

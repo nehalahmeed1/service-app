@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../../middleware/authMiddleware");
+
+const adminAuthMiddleware = require("../../middleware/adminAuthMiddleware");
 
 const {
   getSubCategories,
@@ -9,7 +10,7 @@ const {
   updateSubCategory,
   deleteSubCategory,
   bulkUploadSubCategories,
-  toggleSubCategoryStatus, // ✅ ADD
+  toggleSubCategoryStatus,
 } = require("../../controllers/admin/subCategory.controller");
 
 /**
@@ -17,19 +18,19 @@ const {
  * /api/admin/sub-categories
  */
 
-router.get("/", authMiddleware, getSubCategories);
-router.get("/:id", authMiddleware, getSubCategoryById);
-router.post("/", authMiddleware, createSubCategory);
-router.put("/:id", authMiddleware, updateSubCategory);
+router.get("/", adminAuthMiddleware, getSubCategories);
+router.get("/:id", adminAuthMiddleware, getSubCategoryById);
+router.post("/", adminAuthMiddleware, createSubCategory);
+router.put("/:id", adminAuthMiddleware, updateSubCategory);
 
 // ✅ TOGGLE STATUS (ON / OFF)
 router.patch(
   "/:id/toggle-status",
-  authMiddleware,
+  adminAuthMiddleware,
   toggleSubCategoryStatus
 );
 
-router.delete("/:id", authMiddleware, deleteSubCategory);
-router.post("/bulk-upload", authMiddleware, bulkUploadSubCategories);
+router.delete("/:id", adminAuthMiddleware, deleteSubCategory);
+router.post("/bulk-upload", adminAuthMiddleware, bulkUploadSubCategories);
 
 module.exports = router;

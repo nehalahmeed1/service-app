@@ -5,13 +5,12 @@ import {
   sendPasswordResetEmail,
 } from "firebase/auth";
 import { auth } from "@/firebase";
-import { useLanguage } from "@/context/LanguageContext";
-import { useTranslation } from "react-i18next";
+import axios from "axios";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function Login() {
   const navigate = useNavigate();
-  const { language, setLanguage } = useLanguage();
-  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,16 +19,64 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      alert(t("enterValidMobile"));
+      alert("Enter email and password");
       return;
     }
 
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate("/", { replace: true });
+
+      // 🔥 STEP 1: Firebase Auth
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseToken = await cred.user.getIdToken();
+
+      /* ===============================
+         ROLE DETECTION (SAME AS AUTHCONTEXT)
+      =============================== */
+
+      // 1️⃣ Try Provider
+      try {
+        const providerRes = await axios.post(
+          `${API_BASE_URL}/auth/provider/firebase-login`,
+          { firebaseToken }
+        );
+
+        if (providerRes.data.role === "PROVIDER") {
+          const done = !!providerRes.data.provider?.onboardingCompleted;
+          const status = providerRes.data.provider?.status || "PENDING";
+          localStorage.setItem(
+            "provider_onboarding_completed",
+            done ? "true" : "false"
+          );
+          localStorage.setItem("provider_status", status);
+          navigate(
+            done ? "/provider/dashboard" : "/provider/onboarding",
+            { replace: true }
+          );
+          return;
+        }
+      } catch (err) {}
+
+      // 2️⃣ Try Customer
+      try {
+        const customerRes = await axios.post(
+          `${API_BASE_URL}/auth/customer/firebase-login`,
+          { firebaseToken }
+        );
+
+        if (customerRes.data.role === "CUSTOMER") {
+          navigate("/customer/home", { replace: true });
+          return;
+        }
+      } catch (err) {}
+
+      // ❌ No account found
+      alert("User not found. Please register first.");
+      await auth.signOut();
+
     } catch (error) {
-      alert(error.message);
+      console.error("Login error:", error);
+      alert("Invalid credentials");
     } finally {
       setLoading(false);
     }
@@ -37,13 +84,13 @@ export default function Login() {
 
   const handleForgotPassword = async () => {
     if (!email) {
-      alert(t("enterValidMobile"));
+      alert("Enter email first");
       return;
     }
 
     try {
       await sendPasswordResetEmail(auth, email);
-      alert(t("resetSent") || "Reset email sent");
+      alert("Reset email sent");
     } catch (error) {
       alert(error.message);
     }
@@ -52,45 +99,20 @@ export default function Login() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        {/* 🌍 Language Switch */}
-        <div style={styles.langRow}>
-          <button
-            onClick={() => setLanguage("en")}
-            style={language === "en" ? styles.langActive : styles.langBtn}
-          >
-            English
-          </button>
-          <button
-            onClick={() => setLanguage("hi")}
-            style={language === "hi" ? styles.langActive : styles.langBtn}
-          >
-            हिंदी
-          </button>
-          <button
-            onClick={() => setLanguage("te")}
-            style={language === "te" ? styles.langActive : styles.langBtn}
-          >
-            తెలుగు
-          </button>
-        </div>
+        <h2 style={styles.title}>Login</h2>
 
-        <h2 style={styles.title}>{t("loginTitle")}</h2>
-        <p style={styles.subtitle}>{t("loginSubtitle")}</p>
-
-        {/* Email */}
         <input
           type="email"
-          placeholder={t("email")}
+          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           style={styles.input}
         />
 
-        {/* Password */}
         <div style={styles.passwordWrapper}>
           <input
             type={showPassword ? "text" : "password"}
-            placeholder={t("password")}
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={styles.passwordInput}
@@ -100,12 +122,12 @@ export default function Login() {
             onClick={() => setShowPassword((p) => !p)}
             style={styles.eye}
           >
-            {showPassword ? "🙈" : "👁️"}
+            👁️
           </button>
         </div>
 
         <button onClick={handleForgotPassword} style={styles.forgotBtn}>
-          {t("forgot")}
+          Forgot password?
         </button>
 
         <button
@@ -113,24 +135,13 @@ export default function Login() {
           onClick={handleLogin}
           disabled={loading}
         >
-          {loading ? "..." : t("loginButton")}
+          {loading ? "..." : "Continue"}
         </button>
-
-        <p style={styles.footer}>
-          {t("newHere")}{" "}
-          <button
-            onClick={() => navigate("/register")}
-            style={styles.linkBtn}
-          >
-            {t("register")}
-          </button>
-        </p>
       </div>
     </div>
   );
 }
 
-/* ✅ PERFECTLY ALIGNED STYLES */
 const INPUT_HEIGHT = 44;
 
 const styles = {
@@ -141,7 +152,6 @@ const styles = {
     alignItems: "center",
     background: "#f3f4f6",
   },
-
   card: {
     width: 360,
     background: "#fff",
@@ -149,26 +159,7 @@ const styles = {
     borderRadius: 8,
     boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
   },
-
-  langRow: {
-    textAlign: "right",
-    marginBottom: 12,
-  },
-
-  title: {
-    textAlign: "center",
-    marginBottom: 4,
-    fontSize: 20,
-    fontWeight: 600,
-  },
-
-  subtitle: {
-    textAlign: "center",
-    marginBottom: 16,
-    color: "#6b7280",
-    fontSize: 13,
-  },
-
+  title: { textAlign: "center", marginBottom: 16, fontSize: 20 },
   input: {
     width: "100%",
     height: INPUT_HEIGHT,
@@ -176,23 +167,15 @@ const styles = {
     marginBottom: 12,
     border: "1px solid #ccc",
     borderRadius: 4,
-    boxSizing: "border-box",
   },
-
-  passwordWrapper: {
-    position: "relative",
-    marginBottom: 8,
-  },
-
+  passwordWrapper: { position: "relative", marginBottom: 8 },
   passwordInput: {
     width: "100%",
     height: INPUT_HEIGHT,
     padding: "0 44px 0 12px",
     border: "1px solid #ccc",
     borderRadius: 4,
-    boxSizing: "border-box",
   },
-
   eye: {
     position: "absolute",
     right: 10,
@@ -201,11 +184,7 @@ const styles = {
     background: "none",
     border: "none",
     cursor: "pointer",
-    fontSize: 16,
-    padding: 0,
-    lineHeight: 1,
   },
-
   forgotBtn: {
     background: "none",
     border: "none",
@@ -214,9 +193,7 @@ const styles = {
     marginBottom: 14,
     textAlign: "right",
     width: "100%",
-    fontSize: 13,
   },
-
   loginBtn: {
     width: "100%",
     height: INPUT_HEIGHT,
@@ -225,39 +202,5 @@ const styles = {
     border: "none",
     borderRadius: 4,
     cursor: "pointer",
-    fontSize: 14,
-    fontWeight: 500,
-  },
-
-  footer: {
-    marginTop: 16,
-    fontSize: 13,
-  },
-
-  linkBtn: {
-    background: "none",
-    border: "none",
-    color: "#2563eb",
-    cursor: "pointer",
-    textDecoration: "underline",
-    padding: 0,
-  },
-
-  langBtn: {
-    marginLeft: 6,
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    fontSize: 13,
-  },
-
-  langActive: {
-    marginLeft: 6,
-    fontWeight: "bold",
-    textDecoration: "underline",
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-    fontSize: 13,
   },
 };

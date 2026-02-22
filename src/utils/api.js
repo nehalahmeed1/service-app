@@ -8,7 +8,10 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// ===============================
+// REQUEST INTERCEPTOR
 // Attach admin token automatically
+// ===============================
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("admin_token");
@@ -18,6 +21,22 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// ===============================
+// RESPONSE INTERCEPTOR (OPTIONAL)
+// Centralized error handling
+// ===============================
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Optional: handle 401 globally
+    if (error.response?.status === 401) {
+      localStorage.removeItem("admin_token");
+      // window.location.href = "/admin/login"; // enable if needed
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default api;

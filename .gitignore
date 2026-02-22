@@ -21,3 +21,7 @@ yarn-error.log*
 # IDE
 .vscode/
 .idea/
+
+backend/.env
+backend/firebase-service-account.json
+backend/uploads/
