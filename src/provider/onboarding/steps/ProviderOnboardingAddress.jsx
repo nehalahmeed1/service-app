@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import api from "@/services/providerApi";
 
 const API_BASE = "http://localhost:5000";
 
-export default function ProviderOnboardingAddress({ onNext, onBack, initialData }) {
+export default function ProviderOnboardingAddress({
+  onNext,
+  onBack,
+  initialData,
+  stayOnSave = false,
+}) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     addressLine: "",
     city: "",
@@ -55,12 +62,15 @@ export default function ProviderOnboardingAddress({ onNext, onBack, initialData 
     const { addressLine, city, state, pincode, addressProof } = form;
 
     if (!addressLine || !city || !state || !pincode || (!addressProof && !form.preview)) {
-      alert("Please complete address verification");
+      alert(t("please_complete_address_verification"));
       return;
     }
 
     if (!addressProof && form.preview) {
       onNext();
+      if (stayOnSave) {
+        alert(t("saved"));
+      }
       return;
     }
 
@@ -78,9 +88,12 @@ export default function ProviderOnboardingAddress({ onNext, onBack, initialData 
       await api.post("/provider/onboarding/address", formData);
 
       onNext();
+      if (stayOnSave) {
+        alert(t("saved"));
+      }
     } catch (error) {
       console.error(error);
-      alert("Failed to upload address verification details");
+      alert(t("failed_upload_address_details"));
     } finally {
       setLoading(false);
     }
@@ -89,9 +102,9 @@ export default function ProviderOnboardingAddress({ onNext, onBack, initialData 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Address Verification</h2>
+        <h2 className="text-2xl font-semibold">{t("address_verification")}</h2>
         <p className="text-muted-foreground mt-1">
-          Enter your address details and upload proof
+          {t("address_verification_subtitle")}
         </p>
       </div>
 
@@ -99,7 +112,7 @@ export default function ProviderOnboardingAddress({ onNext, onBack, initialData 
         name="addressLine"
         value={form.addressLine}
         onChange={handleChange}
-        placeholder="Address Line"
+        placeholder={t("address_line")}
         className="w-full border rounded-lg px-4 py-2"
       />
 
@@ -108,21 +121,21 @@ export default function ProviderOnboardingAddress({ onNext, onBack, initialData 
           name="city"
           value={form.city}
           onChange={handleChange}
-          placeholder="City"
+          placeholder={t("city")}
           className="border rounded-lg px-4 py-2"
         />
         <input
           name="state"
           value={form.state}
           onChange={handleChange}
-          placeholder="State"
+          placeholder={t("state")}
           className="border rounded-lg px-4 py-2"
         />
         <input
           name="pincode"
           value={form.pincode}
           onChange={handleChange}
-          placeholder="Pincode"
+          placeholder={t("pincode")}
           maxLength={6}
           className="border rounded-lg px-4 py-2"
         />
@@ -130,19 +143,19 @@ export default function ProviderOnboardingAddress({ onNext, onBack, initialData 
 
       <div className="space-y-2">
         <p className="text-sm font-medium">
-          Address Proof (Electric Bill / Aadhaar)
+          {t("address_proof")}
         </p>
 
         <div className="border rounded-lg p-3 h-40 flex items-center justify-center bg-gray-50">
           {form.preview ? (
             <img
               src={form.preview}
-              alt="Address Proof"
+              alt={t("address_proof")}
               className="h-full object-contain"
             />
           ) : (
             <span className="text-xs text-gray-500">
-              Upload address proof image
+              {t("upload_address_proof_image")}
             </span>
           )}
         </div>
@@ -154,17 +167,19 @@ export default function ProviderOnboardingAddress({ onNext, onBack, initialData 
         />
       </div>
 
-      <div className="flex justify-between">
-        <button onClick={onBack} className="px-6 py-2 rounded-lg border">
-          Back
-        </button>
+      <div className={`flex ${stayOnSave ? "justify-end" : "justify-between"}`}>
+        {!stayOnSave && (
+          <button onClick={onBack} className="px-6 py-2 rounded-lg border">
+            {t("back")}
+          </button>
+        )}
 
         <button
           disabled={loading}
           onClick={handleNext}
           className="bg-primary text-white px-6 py-2 rounded-lg"
         >
-          {loading ? "Uploading..." : "Next"}
+          {loading ? t("saving") : stayOnSave ? t("save") : t("next")}
         </button>
       </div>
     </div>

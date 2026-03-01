@@ -5,9 +5,6 @@ const notDeletedQuery = {
   $or: [{ deleted_at: null }, { deleted_at: { $exists: false } }],
 };
 
-/**
- * Generate UNIQUE slug
- */
 const generateUniqueSlug = async (name) => {
   const baseSlug = slugify(name, {
     lower: true,
@@ -26,29 +23,32 @@ const generateUniqueSlug = async (name) => {
   return slug;
 };
 
-/**
- * GET ALL CATEGORIES (PAGINATED)
- */
 exports.getCategories = async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 10, 50);
     const skip = (page - 1) * limit;
 
-    const { search = "", status } = req.query;
-
+    const { search = "", status, businessLevel } = req.query;
     const query = { ...notDeletedQuery };
 
     if (search) {
-      query.$or = [
-        ...(query.$or || []),
-        { name: { $regex: search, $options: "i" } },
-        { slug: { $regex: search, $options: "i" } },
+      query.$and = [
+        {
+          $or: [
+            { name: { $regex: search, $options: "i" } },
+            { slug: { $regex: search, $options: "i" } },
+          ],
+        },
       ];
     }
 
     if (status && status !== "all") {
       query.status = status;
+    }
+
+    if (businessLevel && businessLevel !== "all") {
+      query.businessLevel = businessLevel;
     }
 
     const [data, total] = await Promise.all([
@@ -76,9 +76,6 @@ exports.getCategories = async (req, res) => {
   }
 };
 
-/**
- * GET CATEGORY BY ID
- */
 exports.getCategoryById = async (req, res) => {
   try {
     const category = await Category.findOne({
@@ -99,24 +96,26 @@ exports.getCategoryById = async (req, res) => {
   }
 };
 
-/**
- * CREATE CATEGORY
- */
 exports.createCategory = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, status, businessLevel } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ message: "Category name is required" });
+    if (!name || !businessLevel) {
+      return res.status(400).json({
+        message: "Category name and business level are required",
+      });
     }
 
     const nameExists = await Category.findOne({
       name,
+      businessLevel,
       ...notDeletedQuery,
     });
 
     if (nameExists) {
-      return res.status(409).json({ message: "Category already exists" });
+      return res.status(409).json({
+        message: "Category already exists for this business level",
+      });
     }
 
     const slug = await generateUniqueSlug(name);
@@ -124,9 +123,10 @@ exports.createCategory = async (req, res) => {
     const category = await Category.create({
       name,
       slug,
-      status: "active",
+      status: status || "active",
+      businessLevel,
       createdBy: req.admin._id,
-      deleted_at: null, // ✅ explicit
+      deleted_at: null,
     });
 
     res.status(201).json(category);
@@ -136,9 +136,6 @@ exports.createCategory = async (req, res) => {
   }
 };
 
-/**
- * UPDATE CATEGORY
- */
 exports.updateCategory = async (req, res) => {
   try {
     const category = await Category.findOne({
@@ -152,6 +149,8 @@ exports.updateCategory = async (req, res) => {
 
     if (req.body.name) category.name = req.body.name;
     if (req.body.status) category.status = req.body.status;
+    if (req.body.businessLevel) category.businessLevel = req.body.businessLevel;
+    if (!category.businessLevel) category.businessLevel = "INDIVIDUAL";
 
     category.updatedBy = req.admin._id;
 
@@ -163,9 +162,6 @@ exports.updateCategory = async (req, res) => {
   }
 };
 
-/**
- * SOFT DELETE CATEGORY
- */
 exports.deleteCategory = async (req, res) => {
   try {
     const category = await Category.findOne({
@@ -178,6 +174,7 @@ exports.deleteCategory = async (req, res) => {
     }
 
     category.deleted_at = new Date();
+    if (!category.businessLevel) category.businessLevel = "INDIVIDUAL";
     category.updatedBy = req.admin._id;
 
     await category.save();
@@ -188,9 +185,6 @@ exports.deleteCategory = async (req, res) => {
   }
 };
 
-/**
- * TOGGLE CATEGORY STATUS
- */
 exports.toggleCategoryStatus = async (req, res) => {
   try {
     const category = await Category.findOne({
@@ -202,9 +196,8 @@ exports.toggleCategoryStatus = async (req, res) => {
       return res.status(404).json({ message: "Category not found" });
     }
 
-    category.status =
-      category.status === "active" ? "inactive" : "active";
-
+    category.status = category.status === "active" ? "inactive" : "active";
+    if (!category.businessLevel) category.businessLevel = "INDIVIDUAL";
     category.updatedBy = req.admin._id;
 
     await category.save();

@@ -38,10 +38,18 @@ const ProviderOnboardingPage = () => {
 
   const [step, setStep] = useState(getStepFromQuery());
   const [prefill, setPrefill] = useState(null);
+  const editMode = searchParams.has("step");
 
   const steps = useMemo(
-    () => ["Profile", "Identity", "Address", "Work", "Bank", "Submit"],
-    []
+    () => [
+      t("profile"),
+      t("identity"),
+      t("address"),
+      t("work"),
+      t("bank"),
+      t("submit"),
+    ],
+    [t]
   );
 
   const next = () => setStep((s) => Math.min(s + 1, steps.length - 1));
@@ -63,12 +71,25 @@ const ProviderOnboardingPage = () => {
     loadPrefill();
   }, []);
 
+  const handleStepSaved = async () => {
+    if (!editMode) {
+      next();
+      return;
+    }
+    try {
+      const res = await providerApi.get("/provider/onboarding/status");
+      setPrefill(res.data?.data || null);
+    } catch (err) {
+      console.error("Failed to refresh onboarding prefill:", err);
+    }
+  };
+
   /* ================= FINISH (BACKEND ONLY) ================= */
   const finishOnboarding = async () => {
     try {
       await providerApi.post("/provider/onboarding/complete");
-      localStorage.setItem("provider_onboarding_completed", "true");
-      localStorage.setItem("provider_status", "PENDING");
+      sessionStorage.setItem("provider_onboarding_completed", "true");
+      sessionStorage.setItem("provider_status", "PENDING");
       setProviderOnboardingCompleted(true);
       setProviderStatus("PENDING");
 
@@ -77,22 +98,21 @@ const ProviderOnboardingPage = () => {
       });
     } catch (err) {
       console.error("Onboarding completion failed:", err);
-      alert("Failed to submit onboarding");
+      alert(t("failed_submit_onboarding"));
     }
   };
 
   return (
     <>
       <Helmet>
-        <title>Provider Onboarding</title>
+        <title>{t("provider_onboarding")}</title>
       </Helmet>
 
       <div className="bg-background px-2 sm:px-4">
         <div className="w-full max-w-4xl mx-auto bg-white border rounded-xl p-6">
           {location.state?.fromRegistration && (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-              Registration successful. Please complete all onboarding steps to
-              start using your provider account.
+              {t("registration_success_complete_onboarding")}
             </div>
           )}
 
@@ -121,7 +141,8 @@ const ProviderOnboardingPage = () => {
           {/* ================= STEPS ================= */}
           {step === 0 && (
             <ProviderOnboardingProfile
-              onNext={next}
+              onNext={handleStepSaved}
+              stayOnSave={editMode}
               initialData={{
                 profile: prefill?.profile,
                 section: prefill?.sections?.find((s) => s.key === "profile"),
@@ -131,32 +152,36 @@ const ProviderOnboardingPage = () => {
 
           {step === 1 && (
             <ProviderOnboardingIdentity
-              onNext={next}
+              onNext={handleStepSaved}
               onBack={back}
+              stayOnSave={editMode}
               initialData={prefill?.sections?.find((s) => s.key === "identity")}
             />
           )}
 
           {step === 2 && (
             <ProviderOnboardingAddress
-              onNext={next}
+              onNext={handleStepSaved}
               onBack={back}
+              stayOnSave={editMode}
               initialData={prefill?.sections?.find((s) => s.key === "address")}
             />
           )}
 
           {step === 3 && (
             <ProviderOnboardingWork
-              onNext={next}
+              onNext={handleStepSaved}
               onBack={back}
+              stayOnSave={editMode}
               initialData={prefill?.sections?.find((s) => s.key === "work")}
             />
           )}
 
           {step === 4 && (
             <ProviderOnboardingBank
-              onNext={next}
+              onNext={handleStepSaved}
               onBack={back}
+              stayOnSave={editMode}
               initialData={prefill?.sections?.find((s) => s.key === "bank")}
             />
           )}

@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  setPersistence,
+  browserSessionPersistence,
+} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import axios from "axios";
 
@@ -17,53 +21,65 @@ export default function CustomerRegister() {
 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
   const [form, setForm] = useState({
     name: "",
     email: "",
     phone: "",
     password: "",
+    confirmPassword: "",
   });
 
   const handleRegister = async () => {
-    if (!form.name || !form.email || !form.phone || !form.password) {
+    if (!form.name || !form.email || !form.phone || !form.password || !form.confirmPassword) {
       alert(t("fillAllFields") || "Please fill all fields");
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      alert(t("password_confirm_mismatch"));
       return;
     }
 
     try {
       setLoading(true);
+      await setPersistence(auth, browserSessionPersistence);
 
-      /* 1️⃣ Firebase Authentication */
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         form.email,
         form.password
       );
-
       const uid = userCredential.user.uid;
 
-      /* 2️⃣ Firestore User Profile */
-      await setDoc(doc(db, "users", uid), {
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        role: "customer",
-        createdAt: new Date(),
-      });
+      // Optional Firestore sync. Registration should continue even if rules block this.
+      try {
+        await setDoc(doc(db, "users", uid), {
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          role: "customer",
+          createdAt: new Date(),
+        });
+      } catch (firestoreError) {
+        console.warn("Skipping Firestore profile write:", firestoreError?.message);
+      }
 
-      /* 3️⃣ 🔁 Sync Customer to MongoDB */
       await axios.post(`${API_BASE_URL}/auth/customer/register`, {
         firebaseUid: uid,
         name: form.name,
         email: form.email,
       });
 
-      /* 4️⃣ Redirect */
       navigate("/customer/home", { replace: true });
     } catch (error) {
       console.error("Customer register error:", error);
-      alert(error?.response?.data?.message || error.message || "Registration failed");
+
+      if (error?.code === "auth/email-already-in-use") {
+        alert(t("email_already_registered_login"));
+        navigate("/login", { replace: true, state: { email: form.email } });
+        return;
+      }
+
+      alert(error?.response?.data?.message || error.message || t("registration_failed"));
     } finally {
       setLoading(false);
     }
@@ -72,7 +88,6 @@ export default function CustomerRegister() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        {/* 🌐 Language Switch */}
         <div style={{ textAlign: "right", marginBottom: 10 }}>
           <button
             onClick={() => setLanguage("en")}
@@ -119,7 +134,6 @@ export default function CustomerRegister() {
           onChange={(e) => setForm({ ...form, phone: e.target.value })}
         />
 
-        {/* 🔐 Password */}
         <div style={styles.passwordWrapper}>
           <input
             type={showPassword ? "text" : "password"}
@@ -137,6 +151,14 @@ export default function CustomerRegister() {
           </button>
         </div>
 
+        <input
+          type={showPassword ? "text" : "password"}
+          style={styles.input}
+          placeholder={t("confirm_password")}
+          value={form.confirmPassword}
+          onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+        />
+
         <button
           style={{ ...styles.btn, opacity: loading ? 0.7 : 1 }}
           onClick={handleRegister}
@@ -145,7 +167,7 @@ export default function CustomerRegister() {
           {loading ? t("registering") || "Registering..." : t("register")}
         </button>
 
-        <button style={styles.link} onClick={() => navigate("/register")}>
+        <button style={styles.link} onClick={() => navigate("/login")}>
           {t("back") || "Back"}
         </button>
       </div>
@@ -153,7 +175,6 @@ export default function CustomerRegister() {
   );
 }
 
-/* ===== STYLES ===== */
 const styles = {
   page: {
     minHeight: "100vh",

@@ -1,50 +1,44 @@
-import React from "react";
-import { useTranslation } from "react-i18next";
+import { useMemo } from "react";
+import { useLanguage } from "@/context/LanguageContext";
 
-const LanguageSwitcher = () => {
-  const { i18n } = useTranslation();
+export default function LanguageSwitcher({ enabled = true }) {
+  const { language, setLanguage } = useLanguage();
+  const isEnabled = useMemo(() => {
+    const flag = localStorage.getItem("multilang_enabled");
+    if (flag === "false") return false;
+    return enabled;
+  }, [enabled]);
 
-  const changeLanguage = (lang) => {
-    i18n.changeLanguage(lang);
-    localStorage.setItem("appLanguage", lang);
-  };
+  if (!isEnabled) return null;
 
   return (
     <div className="flex items-center gap-2">
       <button
-        onClick={() => changeLanguage("en")}
+        onClick={() => setLanguage("en")}
         className={`px-2 py-1 text-xs rounded ${
-          i18n.language === "en"
-            ? "bg-primary text-white"
-            : "bg-muted"
+          language === "en" ? "bg-primary text-white" : "bg-muted"
         }`}
       >
         EN
       </button>
 
       <button
-        onClick={() => changeLanguage("hi")}
+        onClick={() => setLanguage("hi")}
         className={`px-2 py-1 text-xs rounded ${
-          i18n.language === "hi"
-            ? "bg-primary text-white"
-            : "bg-muted"
+          language === "hi" ? "bg-primary text-white" : "bg-muted"
         }`}
       >
         हिंदी
       </button>
 
       <button
-        onClick={() => changeLanguage("te")}
+        onClick={() => setLanguage("te")}
         className={`px-2 py-1 text-xs rounded ${
-          i18n.language === "te"
-            ? "bg-primary text-white"
-            : "bg-muted"
+          language === "te" ? "bg-primary text-white" : "bg-muted"
         }`}
       >
         తెలుగు
       </button>
     </div>
   );
-};
-
-export default LanguageSwitcher;
+}

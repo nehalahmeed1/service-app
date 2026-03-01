@@ -52,7 +52,7 @@ export default function AdminLogin() {
 
     try {
       /**
-       * 🔥 STEP 1: Firebase Auth
+       * STEP 1: Firebase Auth
        */
       const cred = await signInWithEmailAndPassword(
         auth,
@@ -63,7 +63,7 @@ export default function AdminLogin() {
       const firebaseToken = await cred.user.getIdToken();
 
       /**
-       * 🔥 STEP 2: Sync with Backend (create/find admin)
+       * STEP 2: Sync with Backend (create/find admin)
        */
       const data = await firebaseAdminLogin(firebaseToken);
 
@@ -72,7 +72,7 @@ export default function AdminLogin() {
       }
 
       /**
-       * 🔥 STEP 3: Store session
+       * STEP 3: Store session
        */
       if (!data?.token) {
         throw new Error("Admin token missing. Please login again.");
@@ -85,21 +85,36 @@ export default function AdminLogin() {
 
     } catch (error) {
       console.error(error);
+      const backendMessage = error?.response?.data?.message;
+      if (backendMessage) {
+        setApiError(backendMessage);
+        return;
+      }
 
       /**
-       * 🔁 OPTIONAL FALLBACK: manual login (legacy)
+       * OPTIONAL FALLBACK: manual login (legacy)
        */
       try {
         const data = await loginAdmin(form);
-
-        if (!data?.token) {
-          throw new Error("Legacy admin login is not supported for this API");
+        if (!data?.success) {
+          throw new Error("Admin login failed");
         }
 
-        localStorage.setItem("admin_token", data.token);
-        localStorage.setItem("admin_role", data.admin.role);
-        localStorage.setItem("admin_status", data.admin.status);
+        // Retry Firebase sign-in after backend legacy sync.
+        const retryCred = await signInWithEmailAndPassword(
+          auth,
+          form.email,
+          form.password
+        );
+        const retryToken = await retryCred.user.getIdToken();
+        const retryData = await firebaseAdminLogin(retryToken);
 
+        if (retryData.role !== "ADMIN" && retryData.role !== "SUPER_ADMIN") {
+          throw new Error("Not authorized as admin");
+        }
+
+        localStorage.setItem("admin_token", retryData.token);
+        localStorage.setItem("admin_role", retryData.role);
         navigate("/admin", { replace: true });
       } catch (err) {
         setApiError(
@@ -158,7 +173,7 @@ export default function AdminLogin() {
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute right-3 top-2 text-gray-600"
               >
-                👁️
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
             {errors.password && (
@@ -179,7 +194,7 @@ export default function AdminLogin() {
         </form>
 
         <p className="mt-4 text-center text-sm">
-          Don’t have an admin account?{" "}
+          Don't have an admin account?{" "}
           <Link
             to="/admin/register"
             className="text-blue-600 hover:underline"

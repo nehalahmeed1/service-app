@@ -19,6 +19,7 @@ const {
 // 🔥 Admin Firebase Login
 const {
   firebaseLogin,
+  adminFirebaseLogin,
 } = require("../controllers/auth/firebaseLogin.controller");
 
 // 🔥 Provider Firebase Login
@@ -41,6 +42,7 @@ router.post("/provider/register", registerProvider);
 
 // Admin Firebase Login
 router.post("/firebase-login", firebaseLogin);
+router.post("/admin/firebase-login", adminFirebaseLogin);
 
 // Provider Firebase Login
 router.post("/provider/firebase-login", providerFirebaseLogin);

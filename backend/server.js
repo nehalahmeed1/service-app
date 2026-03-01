@@ -53,12 +53,17 @@ const categoryRoutes = require("./routes/admin/category.routes");
 const subCategoryRoutes = require("./routes/admin/subCategory.routes");
 const adminDashboardRoutes = require("./routes/admin/adminDashboard.routes");
 const adminApprovalRoutes = require("./routes/admin/adminApproval.routes");
+const adminInsightsRoutes = require("./routes/admin/adminInsights.routes");
+const adminOperationsRoutes = require("./routes/admin/adminOperations.routes");
 
 // PROVIDER ONBOARDING
 const providerOnboardingRoutes = require("./routes/provider/onboarding.routes");
+const providerBookingRoutes = require("./routes/provider/booking.routes");
+const customerBookingRoutes = require("./routes/customer/booking.routes");
 
 // PUBLIC
 const publicCategoryRoutes = require("./routes/categories.public.routes");
+const publicSubCategoryRoutes = require("./routes/subCategories.public.routes");
 
 // =======================
 // ROUTES REGISTRATION
@@ -66,9 +71,12 @@ const publicCategoryRoutes = require("./routes/categories.public.routes");
 
 // PROVIDER ONBOARDING
 app.use("/api/provider", providerOnboardingRoutes);
+app.use("/api/provider/bookings", providerBookingRoutes);
+app.use("/api/customer/bookings", customerBookingRoutes);
 
 // PUBLIC ROUTES
 app.use("/api/categories", publicCategoryRoutes);
+app.use("/api/sub-categories", publicSubCategoryRoutes);
 
 // AUTH
 app.use("/api/auth", authRoutes);
@@ -76,6 +84,8 @@ app.use("/api", adminAuthRoutes);
 
 // ADMIN MODULES (specific first)
 app.use("/api/admin/dashboard", adminDashboardRoutes);
+app.use("/api/admin/insights", adminInsightsRoutes);
+app.use("/api/admin/operations", adminOperationsRoutes);
 app.use("/api/admin/categories", categoryRoutes);
 app.use("/api/admin/sub-categories", subCategoryRoutes);
 

@@ -1,8 +1,15 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 
 const subCategorySchema = new mongoose.Schema(
   {
-    // 🔗 Link to parent Category
+    businessLevel: {
+      type: String,
+      enum: ["INDIVIDUAL", "SMALL_TEAM", "ENTERPRISE"],
+      required: true,
+      default: "INDIVIDUAL",
+      index: true,
+    },
+
     category_id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
@@ -10,7 +17,6 @@ const subCategorySchema = new mongoose.Schema(
       index: true,
     },
 
-    // 🏷 Sub-Category Name
     name: {
       type: String,
       required: true,
@@ -19,7 +25,6 @@ const subCategorySchema = new mongoose.Schema(
       index: true,
     },
 
-    // 🔗 URL-friendly slug
     slug: {
       type: String,
       required: true,
@@ -28,7 +33,6 @@ const subCategorySchema = new mongoose.Schema(
       index: true,
     },
 
-    // ✅ Active / Inactive
     status: {
       type: String,
       enum: ["active", "inactive"],
@@ -36,7 +40,6 @@ const subCategorySchema = new mongoose.Schema(
       index: true,
     },
 
-    // 🧾 Audit fields
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
@@ -50,7 +53,6 @@ const subCategorySchema = new mongoose.Schema(
       index: true,
     },
 
-    // 🗑 Soft delete
     deleted_at: {
       type: Date,
       default: null,
@@ -58,14 +60,17 @@ const subCategorySchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // createdAt & updatedAt
+    timestamps: true,
   }
 );
 
-// 🔒 Prevent duplicate sub-category names inside same category
 subCategorySchema.index(
-  { category_id: 1, name: 1 },
+  { category_id: 1, name: 1, businessLevel: 1 },
   { unique: true }
 );
+
+// Hot-path indexes for public listing APIs.
+subCategorySchema.index({ status: 1, deleted_at: 1, name: 1 });
+subCategorySchema.index({ status: 1, deleted_at: 1, category_id: 1, name: 1 });
 
 module.exports = mongoose.model("SubCategory", subCategorySchema);

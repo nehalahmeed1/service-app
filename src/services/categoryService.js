@@ -1,21 +1,14 @@
 import api from "./providerApi";
 
-/* ======================================================
-   PUBLIC – PROVIDER / CUSTOMER
-====================================================== */
-
-/**
- * Fetch ACTIVE categories (provider onboarding, filters)
- * GET /api/categories
- */
 export const fetchPublicCategories = async () => {
   const res = await api.get("/categories");
-  return res.data.data || []; // ✅ always array
+  return res.data.data || [];
 };
 
-/* ======================================================
-   ADMIN – CATEGORY MANAGEMENT
-====================================================== */
+export const fetchPublicSubCategories = async (params = {}) => {
+  const res = await api.get("/sub-categories", { params });
+  return res.data.data || [];
+};
 
 export const fetchCategories = async (params = {}) => {
   const res = await api.get("/admin/categories", { params });

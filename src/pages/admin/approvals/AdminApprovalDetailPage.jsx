@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   fetchProviderById,
+  fetchProviderAuditTrail,
   approveProvider,
   rejectProvider,
 } from "@/services/approvalService";
@@ -16,12 +17,15 @@ export default function AdminApprovalDetailPage() {
   const [loading, setLoading] = useState(true);
   const [rejectReason, setRejectReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [audit, setAudit] = useState({ sectionAudit: [], timeline: [] });
 
   const loadProvider = async () => {
     try {
       setLoading(true);
       const data = await fetchProviderById(providerId);
+      const auditData = await fetchProviderAuditTrail(providerId);
       setProvider(data);
+      setAudit(auditData || { sectionAudit: [], timeline: [] });
     } finally {
       setLoading(false);
     }
@@ -106,6 +110,7 @@ export default function AdminApprovalDetailPage() {
         title="Profile Verification"
         sectionKey="profile"
         data={verification.profile}
+        auditData={audit.sectionAudit?.find((item) => item.key === "profile")}
         providerId={providerId}
         onUpdate={loadProvider}
       />
@@ -114,6 +119,7 @@ export default function AdminApprovalDetailPage() {
         title="Identity Verification"
         sectionKey="identity"
         data={verification.identity}
+        auditData={audit.sectionAudit?.find((item) => item.key === "identity")}
         providerId={providerId}
         onUpdate={loadProvider}
       />
@@ -122,6 +128,7 @@ export default function AdminApprovalDetailPage() {
         title="Address Verification"
         sectionKey="address"
         data={verification.address}
+        auditData={audit.sectionAudit?.find((item) => item.key === "address")}
         providerId={providerId}
         onUpdate={loadProvider}
       />
@@ -130,6 +137,7 @@ export default function AdminApprovalDetailPage() {
         title="Work Verification"
         sectionKey="work"
         data={verification.work}
+        auditData={audit.sectionAudit?.find((item) => item.key === "work")}
         providerId={providerId}
         onUpdate={loadProvider}
       />
@@ -138,9 +146,40 @@ export default function AdminApprovalDetailPage() {
         title="Bank Verification"
         sectionKey="bank"
         data={verification.bank}
+        auditData={audit.sectionAudit?.find((item) => item.key === "bank")}
         providerId={providerId}
         onUpdate={loadProvider}
       />
+
+      <div className="bg-white rounded shadow p-5 space-y-4">
+        <h2 className="font-semibold text-lg">Audit Timeline</h2>
+        {audit.timeline?.length ? (
+          <div className="space-y-3">
+            {audit.timeline.map((event) => (
+              <div key={event.id} className="border rounded p-3">
+                <div className="flex justify-between gap-3 text-sm">
+                  <p className="font-medium">
+                    {event.action}
+                    {event.section ? ` (${event.section})` : ""}
+                  </p>
+                  <StatusBadge status={event.status} />
+                </div>
+                {event.remarks ? (
+                  <p className="text-sm mt-1">
+                    <strong>Remarks:</strong> {event.remarks}
+                  </p>
+                ) : null}
+                <p className="text-xs text-gray-500 mt-1">
+                  {new Date(event.createdAt).toLocaleString()}
+                  {event.admin?.name ? ` | By ${event.admin.name}` : ""}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">No audit events found yet.</p>
+        )}
+      </div>
 
       {/* ================= FINAL ACTIONS ================= */}
       <div className="bg-white rounded shadow p-5 border-t space-y-4">

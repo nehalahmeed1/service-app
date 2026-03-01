@@ -133,6 +133,9 @@ export default function CategoryTable({
             <th className="p-3 text-center font-semibold w-32">
               Status
             </th>
+            <th className="p-3 text-left font-semibold w-44">
+              Business Level
+            </th>
             <th className="p-3 text-right font-semibold w-32">
               Actions
             </th>
@@ -143,7 +146,7 @@ export default function CategoryTable({
           {filtered.length === 0 && (
             <tr>
               <td
-                colSpan="4"
+                colSpan="5"
                 className="p-8 text-center text-gray-500"
               >
                 No categories found
@@ -193,6 +196,12 @@ export default function CategoryTable({
                     }`}
                   />
                 </button>
+              </td>
+
+              <td className="p-3">
+                <span className="text-xs font-medium uppercase tracking-wide text-gray-700">
+                  {cat.businessLevel || "INDIVIDUAL"}
+                </span>
               </td>
 
               {/* ACTIONS */}

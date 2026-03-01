@@ -4,6 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 export default function ProviderOnboardingGuard() {
   const { user, role, loading, providerOnboardingCompleted } = useAuth();
   const location = useLocation();
+  const providerToken = sessionStorage.getItem("provider_token");
+  const activeRole = sessionStorage.getItem("active_role");
 
   if (loading) return null;
 
@@ -13,6 +15,16 @@ export default function ProviderOnboardingGuard() {
 
   if (role !== "PROVIDER") {
     return <Navigate to="/" replace />;
+  }
+
+  const validProviderSession =
+    !!providerToken &&
+    providerToken !== "undefined" &&
+    providerToken !== "null" &&
+    activeRole === "PROVIDER";
+
+  if (!validProviderSession) {
+    return <Navigate to="/login" replace />;
   }
 
   // Allow onboarding always

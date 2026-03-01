@@ -1,11 +1,13 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import RequestCard from "./RequestCard";
 
 const RequestList = ({ requests, onAccept, onReject }) => {
+  const { t } = useTranslation();
   if (!requests.length) {
     return (
       <div className="text-center text-muted-foreground py-12">
-        No requests found
+        {t("no_requests_found")}
       </div>
     );
   }

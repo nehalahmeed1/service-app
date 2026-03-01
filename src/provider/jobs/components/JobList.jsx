@@ -1,11 +1,20 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import JobCard from "./JobCard";
 
-const JobList = ({ jobs, onComplete }) => {
+const JobList = ({
+  jobs,
+  onArriving,
+  onStart,
+  onComplete,
+  onCancel,
+  onUploadProof,
+}) => {
+  const { t } = useTranslation();
   if (!jobs.length) {
     return (
       <div className="text-center text-muted-foreground py-12">
-        No jobs yet
+        {t("no_jobs_yet")}
       </div>
     );
   }
@@ -16,7 +25,11 @@ const JobList = ({ jobs, onComplete }) => {
         <JobCard
           key={job.id}
           job={job}
+          onArriving={onArriving}
+          onStart={onStart}
           onComplete={onComplete}
+          onCancel={onCancel}
+          onUploadProof={onUploadProof}
         />
       ))}
     </div>

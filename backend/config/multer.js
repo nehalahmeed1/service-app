@@ -65,10 +65,16 @@ const uploadBank = multer({
   fileFilter,
 });
 
+const uploadBookingProof = multer({
+  storage: createStorage("booking-proof"),
+  fileFilter,
+});
+
 module.exports = {
   uploadIdentity,
   uploadAddress,
   uploadProfile,
   uploadWork,
   uploadBank,
+  uploadBookingProof,
 };

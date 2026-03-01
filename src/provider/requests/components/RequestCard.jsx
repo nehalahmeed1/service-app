@@ -1,14 +1,41 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import Icon from "../../../components/AppIcon";
 import Button from "../../../components/ui/Button";
 
+const STATUS_STEPS = [
+  "BOOKED",
+  "PROVIDER_ASSIGNED",
+  "ACCEPTED",
+  "ARRIVING",
+  "IN_PROGRESS",
+  "SERVICE_DONE",
+  "PROOF_UPLOADED",
+  "COMPLETED",
+];
+
 const statusColors = {
-  new: "bg-blue-100 text-blue-700",
-  accepted: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
+  BOOKED: "bg-slate-100 text-slate-700",
+  PROVIDER_ASSIGNED: "bg-cyan-100 text-cyan-700",
+  ACCEPTED: "bg-blue-100 text-blue-700",
+  ARRIVING: "bg-sky-100 text-sky-700",
+  IN_PROGRESS: "bg-indigo-100 text-indigo-700",
+  SERVICE_DONE: "bg-amber-100 text-amber-700",
+  PROOF_UPLOADED: "bg-emerald-100 text-emerald-700",
+  COMPLETED: "bg-green-100 text-green-700",
+  REJECTED: "bg-red-100 text-red-700",
+  CANCELLED: "bg-rose-100 text-rose-700",
 };
 
 const RequestCard = ({ request, onAccept, onReject }) => {
+  const { t } = useTranslation();
+  const statusKey = (request.status || "").toLowerCase();
+  const fallbackLabel = (request.status || "")
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const statusLabel = t(statusKey, { defaultValue: fallbackLabel });
+
   return (
     <div className="bg-card border rounded-xl p-5 flex flex-col gap-4">
 
@@ -27,7 +54,7 @@ const RequestCard = ({ request, onAccept, onReject }) => {
             statusColors[request.status] || "bg-gray-100 text-gray-700"
           }`}
         >
-          {request.status.toUpperCase()}
+          {statusLabel}
         </span>
       </div>
 
@@ -46,21 +73,49 @@ const RequestCard = ({ request, onAccept, onReject }) => {
         </div>
       </div>
 
-      {request.status === "new" && (
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Booking Timeline
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {STATUS_STEPS.map((step) => {
+            const reached =
+              (request.statusHistory || []).some((history) => history.status === step) ||
+              request.status === step;
+            return (
+              <span
+                key={step}
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  reached
+                    ? "bg-primary/10 text-primary border border-primary/30"
+                    : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {step
+                  .toLowerCase()
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase())}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      {request.status === "PROVIDER_ASSIGNED" && (
         <div className="flex gap-3 pt-2">
           <Button
             variant="default"
             size="sm"
             onClick={() => onAccept(request.id)}
           >
-            Accept
+            {t("accept")}
           </Button>
           <Button
             variant="destructive"
             size="sm"
             onClick={() => onReject(request.id)}
           >
-            Reject
+            {t("reject")}
           </Button>
         </div>
       )}

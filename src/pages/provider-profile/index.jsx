@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import providerApi from "@/services/providerApi";
 import Icon from "@/components/AppIcon";
 
@@ -12,7 +13,17 @@ function profileStatusClass(status) {
   return "bg-amber-100 text-amber-700";
 }
 
+function getPrimaryServiceLabel(profile) {
+  const category = profile?.serviceCategoryName;
+  const subCategory = profile?.serviceSubCategoryName;
+  if (category && subCategory) return `${category} / ${subCategory}`;
+  if (category) return category;
+  if (subCategory) return subCategory;
+  return profile?.service || "-";
+}
+
 export default function ProviderProfile() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -26,7 +37,7 @@ export default function ProviderProfile() {
         setProfile(res.data?.data || null);
       } catch (err) {
         console.error(err);
-        setError("Failed to load profile");
+        setError(t("failed_load_profile"));
       } finally {
         setLoading(false);
       }
@@ -40,13 +51,13 @@ export default function ProviderProfile() {
     return `${API_BASE}${profile.avatar}`;
   }, [profile]);
 
-  if (loading) return <p className="text-sm">Loading profile...</p>;
+  if (loading) return <p className="text-sm">{t("loading_profile")}</p>;
   if (error) return <p className="text-sm text-red-600">{error}</p>;
 
   return (
     <>
       <Helmet>
-        <title>Provider Profile</title>
+        <title>{t("provider_profile")}</title>
       </Helmet>
 
       <main className="space-y-6">
@@ -56,7 +67,7 @@ export default function ProviderProfile() {
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
-                  alt="Provider Avatar"
+                  alt={t("provider_avatar")}
                   className="h-20 w-20 rounded-full object-cover border"
                 />
               ) : (
@@ -66,7 +77,7 @@ export default function ProviderProfile() {
               )}
 
               <div>
-                <h1 className="text-2xl font-bold">{profile?.name || "Provider"}</h1>
+                <h1 className="text-2xl font-bold">{profile?.name || t("provider")}</h1>
                 <p className="text-sm text-muted-foreground">{profile?.email}</p>
                 <span
                   className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold mt-2 ${profileStatusClass(
@@ -82,37 +93,37 @@ export default function ProviderProfile() {
               onClick={() => navigate("/provider/profile/edit")}
               className="h-10 px-4 rounded-md bg-primary text-white hover:opacity-90"
             >
-              Edit Profile
+              {t("edit_profile")}
             </button>
           </div>
         </section>
 
         <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
           <div className="xl:col-span-2 rounded-xl border bg-white p-5">
-            <h2 className="font-semibold text-lg mb-4">Professional Details</h2>
+            <h2 className="font-semibold text-lg mb-4">{t("professional_details")}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              <InfoItem icon="Phone" label="Phone" value={profile?.phone || "-"} />
-              <InfoItem icon="Wrench" label="Primary Service" value={profile?.service || "-"} />
-              <InfoItem icon="MapPin" label="Location" value={profile?.location || "-"} />
+              <InfoItem icon="Phone" label={t("phoneNumber")} value={profile?.phone || "-"} />
+              <InfoItem icon="Wrench" label={t("primary_service")} value={getPrimaryServiceLabel(profile)} />
+              <InfoItem icon="MapPin" label={t("location")} value={profile?.location || "-"} />
               <InfoItem
                 icon="BadgeCheck"
-                label="Experience"
-                value={`${profile?.yearsExperience || 0} years`}
+                label={t("experience")}
+                value={`${profile?.yearsExperience || 0} ${t("years")}`}
               />
             </div>
           </div>
 
           <div className="rounded-xl border bg-white p-5">
-            <h2 className="font-semibold text-lg mb-4">Verification</h2>
+            <h2 className="font-semibold text-lg mb-4">{t("verification")}</h2>
             <div className="space-y-3 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Onboarding</span>
+                <span className="text-muted-foreground">{t("onboarding")}</span>
                 <span className="font-medium">
-                  {profile?.onboardingCompleted ? "Submitted" : "Incomplete"}
+                  {profile?.onboardingCompleted ? t("submitted") : t("incomplete")}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Account Status</span>
+                <span className="text-muted-foreground">{t("account_status")}</span>
                 <span className="font-medium">{profile?.status || "PENDING"}</span>
               </div>
             </div>
@@ -121,15 +132,15 @@ export default function ProviderProfile() {
               onClick={() => navigate("/provider/verification-center")}
               className="mt-4 w-full h-10 rounded-md border hover:bg-gray-50"
             >
-              Open Verification Center
+              {t("open_verification_center")}
             </button>
           </div>
         </section>
 
         <section className="rounded-xl border bg-white p-5">
-          <h2 className="font-semibold text-lg mb-3">About</h2>
+          <h2 className="font-semibold text-lg mb-3">{t("about")}</h2>
           <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-            {profile?.bio || "Add a professional bio to improve profile quality and trust."}
+            {profile?.bio || t("provider_bio_placeholder")}
           </p>
         </section>
       </main>

@@ -1,152 +1,108 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { useLanguage } from "@/context/LanguageContext";
+import Icon from "@/components/AppIcon";
+import { fetchPublicCategories } from "@/services/categoryService";
+import { translateEntity } from "@/utils/i18nEntity";
+
+const HERO_IMAGES = [
+  "https://images.unsplash.com/photo-1607002852058-0b0f18bdf431?auto=format&fit=crop&w=700&q=80",
+  "https://images.unsplash.com/photo-1519823551278-64ac92734fb1?auto=format&fit=crop&w=700&q=80",
+  "https://images.unsplash.com/photo-1631549916768-4119b2e5f926?auto=format&fit=crop&w=700&q=80",
+  "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=700&q=80",
+];
+
+const ICONS = [
+  "Sparkles",
+  "Scissors",
+  "SprayCan",
+  "Wrench",
+  "Droplets",
+  "PaintBucket",
+  "Fan",
+  "PanelsTopLeft",
+  "Hammer",
+  "ShieldCheck",
+];
 
 export default function ServiceProviderSearch() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-
-  const { language } = useLanguage();
-  const { t, i18n } = useTranslation();
+  const location = useLocation();
+  const query = new URLSearchParams(location.search).get("q") || "";
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (i18n.language !== language) {
-      i18n.changeLanguage(language);
-    }
-  }, [language, i18n]);
+    const loadCategories = async () => {
+      try {
+        const data = await fetchPublicCategories();
+        setCategories(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to load public categories", err);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const [search, setSearch] = useState("");
+    loadCategories();
+  }, []);
 
-  const providers = [
-    { id: 1, name: "Rahul Electrician", service: "Electrician" },
-    { id: 2, name: "Amit Plumber", service: "Plumber" },
-  ];
-
-  const filtered = providers.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.service.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return categories;
+    return categories.filter((item) => item.name?.toLowerCase().includes(q));
+  }, [categories, query]);
 
   return (
-    <div style={styles.page}>
-      <div style={styles.container}>
-        <h1 style={styles.title}>
-          {t("find_service_providers")}
-        </h1>
+    <>
+      <Helmet>
+        <title>{t("appName")}</title>
+      </Helmet>
 
-        <input
-          placeholder={t("search_services")}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={styles.search}
-        />
+      <div className="mx-auto max-w-7xl pb-10">
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.05fr_1.35fr]">
+          <div className="space-y-5">
+            <h1 className="text-4xl sm:text-5xl lg:text-[52px] leading-[1.05] font-semibold text-slate-900">
+              {t("home_services_doorstep")}
+            </h1>
 
-        <div style={styles.grid}>
-          {filtered.map((provider) => (
-            <div
-              key={provider.id}
-              style={styles.card}
-              onClick={() =>
-                navigate(`/customer/provider/${provider.id}`)
-              }
-            >
-              <div style={styles.avatar}>
-                {provider.name.charAt(0)}
-              </div>
+            <article className="rounded-xl border bg-white p-5">
+              <h2 className="text-[30px] font-semibold text-slate-900">{t("what_are_you_looking_for")}</h2>
 
-              <div>
-                <h3 style={styles.name}>{provider.name}</h3>
-                <p style={styles.service}>{provider.service}</p>
-              </div>
-            </div>
-          ))}
-        </div>
+              {loading ? (
+                <p className="mt-4 text-sm text-slate-500">{t("loading_categories")}</p>
+              ) : (
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {filtered.map((item, index) => (
+                    <button
+                      key={item._id}
+                      onClick={() => navigate(`/customer/services/${item.slug || item._id}`)}
+                      className="rounded-lg border bg-slate-50 p-3 text-left transition hover:bg-slate-100"
+                    >
+                      <div className="h-11 w-11 rounded-md bg-white border border-slate-200 flex items-center justify-center text-slate-700">
+                        <Icon name={ICONS[index % ICONS.length]} size={18} />
+                      </div>
+                      <p className="mt-2 text-xs font-medium text-slate-800 leading-4 min-h-8">
+                        {translateEntity(t, "category_name", item, item.name)}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </article>
+          </div>
 
-        {!filtered.length && (
-          <p style={styles.empty}>
-            {t("no_providers_found")}
-          </p>
-        )}
+          <div className="grid grid-cols-2 gap-3">
+            <img src={HERO_IMAGES[0]} alt="Service 1" className="h-40 sm:h-[220px] lg:h-[270px] w-full rounded-xl object-cover" />
+            <img src={HERO_IMAGES[1]} alt="Service 2" className="h-40 sm:h-[220px] lg:h-[270px] w-full rounded-xl object-cover" />
+            <img src={HERO_IMAGES[2]} alt="Service 3" className="h-40 sm:h-[220px] lg:h-[270px] w-full rounded-xl object-cover" />
+            <img src={HERO_IMAGES[3]} alt="Service 4" className="h-40 sm:h-[220px] lg:h-[270px] w-full rounded-xl object-cover" />
+          </div>
+        </section>
       </div>
-    </div>
+    </>
   );
 }
-
-const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "#f3f4f6",
-    padding: "40px 16px",
-  },
-
-  container: {
-    maxWidth: 1100,
-    margin: "0 auto",
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: 600,
-    marginBottom: 20,
-  },
-
-  search: {
-    width: "100%",
-    maxWidth: 420,
-    padding: "12px 14px",
-    borderRadius: 8,
-    border: "1px solid #d1d5db",
-    marginBottom: 30,
-    fontSize: 15,
-  },
-
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-    gap: 20,
-  },
-
-  card: {
-    background: "#fff",
-    padding: 20,
-    borderRadius: 12,
-    display: "flex",
-    gap: 14,
-    alignItems: "center",
-    cursor: "pointer",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-    transition: "transform 0.15s ease, box-shadow 0.15s ease",
-  },
-
-  avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: "50%",
-    background: "#2563eb",
-    color: "#fff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: 600,
-    fontSize: 18,
-  },
-
-  name: {
-    margin: 0,
-    fontSize: 16,
-    fontWeight: 600,
-  },
-
-  service: {
-    margin: 0,
-    fontSize: 14,
-    color: "#6b7280",
-  },
-
-  empty: {
-    marginTop: 40,
-    textAlign: "center",
-    color: "#6b7280",
-  },
-};

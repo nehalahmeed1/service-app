@@ -20,6 +20,7 @@ export default function EditCategory() {
   const [category, setCategory] = useState({
     name: "",
     slug: "",
+    businessLevel: "INDIVIDUAL",
     status: "active",
     createdBy: null,
     updatedBy: null,
@@ -165,6 +166,20 @@ export default function EditCategory() {
             <p className="text-xs text-gray-500 mt-1">
               Auto-generated from category name
             </p>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Business Level</label>
+            <select
+              name="businessLevel"
+              value={category.businessLevel || "INDIVIDUAL"}
+              onChange={handleChange}
+              className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="INDIVIDUAL">Individual</option>
+              <option value="SMALL_TEAM">Small Team</option>
+              <option value="ENTERPRISE">Enterprise</option>
+            </select>
           </div>
 
           {/* ================= AUDIT ================= */}

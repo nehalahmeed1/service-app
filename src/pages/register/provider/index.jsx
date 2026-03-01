@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  setPersistence,
+  browserSessionPersistence,
+} from "firebase/auth";
 import axios from "axios";
 
 import { auth } from "@/firebase";
@@ -49,6 +53,7 @@ export default function ProviderRegister() {
 
     try {
       setLoading(true);
+      await setPersistence(auth, browserSessionPersistence);
 
       /* 1️⃣ Firebase Authentication */
       const userCredential = await createUserWithEmailAndPassword(
@@ -81,7 +86,7 @@ export default function ProviderRegister() {
       alert(
         error?.response?.data?.message ||
           error.message ||
-          "Registration failed"
+          t("registration_failed")
       );
     } finally {
       setLoading(false);
@@ -180,7 +185,7 @@ export default function ProviderRegister() {
           {loading ? t("registering") || "Registering..." : t("register")}
         </button>
 
-        <button style={styles.link} onClick={() => navigate("/register")}>
+        <button style={styles.link} onClick={() => navigate("/provider/login")}>
           {t("back") || "Back"}
         </button>
       </div>

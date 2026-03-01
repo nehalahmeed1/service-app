@@ -1,6 +1,6 @@
 import { Clock, PlayCircle, CheckCircle, XCircle } from "lucide-react";
 
-const statusConfig = [
+const defaultStatusConfig = [
   {
     key: "pending",
     label: "Pending",
@@ -35,7 +35,17 @@ const statusConfig = [
   },
 ];
 
-const OperationalStatus = () => {
+const OperationalStatus = ({ data }) => {
+  const statusMap = (data?.jobStatus || []).reduce((acc, row) => {
+    acc[row._id] = row.count;
+    return acc;
+  }, {});
+
+  const statusConfig = defaultStatusConfig.map((item) => ({
+    ...item,
+    count: statusMap[item.key] ?? 0,
+  }));
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <h3 className="font-semibold text-gray-800 mb-4">

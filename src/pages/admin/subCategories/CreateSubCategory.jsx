@@ -8,6 +8,7 @@ export default function CreateSubCategory() {
 
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [businessLevel, setBusinessLevel] = useState("");
   const [categories, setCategories] = useState([]);
 
   const [loading, setLoading] = useState(false);
@@ -102,7 +103,12 @@ export default function CreateSubCategory() {
           <select
             className="w-full border p-2 rounded bg-white"
             value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
+            onChange={(e) => {
+              const selectedId = e.target.value;
+              setCategoryId(selectedId);
+              const selected = categories.find((cat) => cat._id === selectedId);
+              setBusinessLevel(selected?.businessLevel || "");
+            }}
             required
           >
             <option value="">Select Category</option>
@@ -113,6 +119,17 @@ export default function CreateSubCategory() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="block mb-1 font-medium">
+            Business Level
+          </label>
+          <input
+            className="w-full border p-2 rounded bg-gray-100"
+            value={businessLevel || "Auto from category"}
+            disabled
+          />
         </div>
 
         {/* Actions */}

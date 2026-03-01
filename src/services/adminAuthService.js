@@ -44,7 +44,7 @@ export const loginAdmin = async (payload) => {
  */
 export const firebaseAdminLogin = async (firebaseToken) => {
   const response = await axios.post(
-    `${API_BASE_URL}/auth/firebase-login`,
+    `${API_BASE_URL}/auth/admin/firebase-login`,
     { firebaseToken }
   );
 

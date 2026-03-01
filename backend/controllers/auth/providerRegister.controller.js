@@ -11,11 +11,22 @@ const registerProvider = async (req, res) => {
       });
     }
 
-    // Prevent duplicate provider
-    const existing = await Provider.findOne({ firebaseUid });
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    // Prevent duplicate provider and keep registration idempotent.
+    const existing = await Provider.findOne({
+      $or: [{ firebaseUid }, { email: normalizedEmail }],
+    });
     if (existing) {
-      return res.status(400).json({
+      if (existing.firebaseUid !== firebaseUid) {
+        existing.firebaseUid = firebaseUid;
+        await existing.save();
+      }
+
+      return res.status(200).json({
+        success: true,
         message: "Provider already registered",
+        provider: existing,
       });
     }
 
@@ -23,7 +34,7 @@ const registerProvider = async (req, res) => {
       userId: new mongoose.Types.ObjectId(), // temporary placeholder
       firebaseUid,
       name,
-      email,
+      email: normalizedEmail,
       service: service || "",
       location: location || "",
       phone: phone || "",

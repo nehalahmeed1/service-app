@@ -1,7 +1,6 @@
 import { CheckCircle, XCircle, UserPlus, ClipboardList } from "lucide-react";
 
-// Temporary mock activity data (replace with API later)
-const activities = [
+const defaultActivities = [
   {
     id: 1,
     message: "New booking created (ID #1023)",
@@ -36,7 +35,31 @@ const activities = [
   },
 ];
 
-const RecentActivity = () => {
+const getTimeAgo = (value) => {
+  const date = new Date(value);
+  const diffMs = Date.now() - date.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs} hr ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days} day ago`;
+};
+
+const RecentActivity = ({ data }) => {
+  const activities =
+    Array.isArray(data?.recentActivity) && data.recentActivity.length
+      ? data.recentActivity.map((item) => ({
+          id: item.id,
+          message: item.message,
+          time: getTimeAgo(item.time),
+          icon: ClipboardList,
+          color: "text-blue-600",
+          bg: "bg-blue-100",
+        }))
+      : defaultActivities;
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       {/* Header */}

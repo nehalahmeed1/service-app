@@ -17,11 +17,25 @@ router.get(
   adminApprovalController.getPendingProviders
 );
 
+// Get admin notification feed for provider updates
+router.get(
+  "/notifications",
+  adminAuthMiddleware,
+  adminApprovalController.getApprovalNotifications
+);
+
 // Get single provider details
 router.get(
   "/providers/:id",
   adminAuthMiddleware,
   adminApprovalController.getProviderById
+);
+
+// Get provider audit trail for approvals
+router.get(
+  "/providers/:id/audit",
+  adminAuthMiddleware,
+  adminApprovalController.getProviderAuditTrail
 );
 
 // Approve provider

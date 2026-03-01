@@ -13,6 +13,7 @@ export default function SubCategories() {
   const [list, setList] = useState([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [businessLevel, setBusinessLevel] = useState("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -24,6 +25,7 @@ export default function SubCategories() {
       const res = await fetchSubCategories({
         search,
         status,
+        businessLevel,
         page: 1,
         limit: 50,
       });
@@ -37,7 +39,7 @@ export default function SubCategories() {
 
   useEffect(() => {
     loadData();
-  }, [search, status]);
+  }, [search, status, businessLevel]);
 
   /* ================= BULK UPLOAD ================= */
   const handleFileUpload = async (e) => {
@@ -123,6 +125,17 @@ export default function SubCategories() {
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
+
+        <select
+          className="border px-3 py-2 rounded"
+          value={businessLevel}
+          onChange={(e) => setBusinessLevel(e.target.value)}
+        >
+          <option value="all">All Levels</option>
+          <option value="INDIVIDUAL">Individual</option>
+          <option value="SMALL_TEAM">Small Team</option>
+          <option value="ENTERPRISE">Enterprise</option>
+        </select>
       </div>
 
       {/* ================= TABLE ================= */}
@@ -132,6 +145,7 @@ export default function SubCategories() {
             <tr>
               <th className="px-4 py-3 text-left">Name</th>
               <th className="px-4 py-3 text-left">Category</th>
+              <th className="px-4 py-3 text-left">Business Level</th>
               <th className="px-4 py-3 text-left">Created</th>
               <th className="px-4 py-3 text-left">Updated</th>
               <th className="px-4 py-3 text-center">Status</th>
@@ -147,6 +161,9 @@ export default function SubCategories() {
                   {item.category_id?.name}
                 </td>
                 <td className="px-4 py-3">
+                  {item.businessLevel || item.category_id?.businessLevel}
+                </td>
+                <td className="px-4 py-3">
                   {new Date(item.createdAt).toLocaleString()}
                 </td>
                 <td className="px-4 py-3">
@@ -160,7 +177,7 @@ export default function SubCategories() {
                       onChange={() => handleToggleStatus(item._id)}
                       className="sr-only peer"
                     />
-                    <div className="w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-green-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:h-4 after:w-4 after:rounded-full after:transition-all peer-checked:after:translate-x-5" />
+                    <div className="relative w-10 h-5 bg-gray-200 rounded-full peer peer-checked:bg-green-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:h-4 after:w-4 after:rounded-full after:transition-all peer-checked:after:translate-x-5" />
                   </label>
                 </td>
                 <td className="px-4 py-3 text-right space-x-3">

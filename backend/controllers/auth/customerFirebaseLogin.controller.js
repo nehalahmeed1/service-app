@@ -1,6 +1,8 @@
 const admin = require("firebase-admin");
 const path = require("path");
 const Customer = require("../../models/Customer");
+const Provider = require("../../models/Provider");
+const Admin = require("../../models/Admin");
 
 const serviceAccount = require(path.join(
   __dirname,
@@ -22,13 +24,52 @@ const customerFirebaseLogin = async (req, res) => {
     }
 
     const decoded = await admin.auth().verifyIdToken(firebaseToken);
-    const { uid } = decoded;
+    const { uid, email, name } = decoded;
+    const resolvedEmail = (email || "").trim().toLowerCase();
 
-    const customer = await Customer.findOne({ firebaseUid: uid });
+    if (!resolvedEmail) {
+      return res.status(400).json({ message: "Customer email missing in token" });
+    }
+
+    // Hard role guard: provider account must not login as customer.
+    const providerAccount = await Provider.findOne({
+      $or: [{ firebaseUid: uid }, { email: resolvedEmail }],
+    })
+      .select("_id")
+      .lean();
+
+    if (providerAccount) {
+      return res.status(403).json({
+        message: "This account is registered as provider",
+        role: "PROVIDER",
+      });
+    }
+
+    const adminAccount = await Admin.findOne({ email: resolvedEmail })
+      .select("_id role")
+      .lean();
+
+    let customer =
+      (await Customer.findOne({ firebaseUid: uid })) ||
+      (await Customer.findOne({ email: resolvedEmail }));
 
     if (!customer) {
-      return res.status(404).json({ message: "Customer not registered" });
+      if (adminAccount) {
+        return res.status(403).json({
+          message: "Admin account is not registered as customer",
+          role: adminAccount.role || "ADMIN",
+        });
+      }
+
+      return res.status(403).json({
+        message: "Customer not registered",
+        role: "CUSTOMER",
+      });
     }
+
+    customer.firebaseUid = uid;
+    customer.name = customer.name || name || resolvedEmail.split("@")[0];
+    await customer.save();
 
     return res.status(200).json({
       success: true,

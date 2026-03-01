@@ -1,19 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signOut, onAuthStateChanged } from "firebase/auth";
+import { useTranslation } from "react-i18next";
 import { auth } from "@/firebase";
-import { useAuth } from "@/context/AuthContext";
-import { useLanguage } from "@/context/LanguageContext";
-import { useTranslation } from "react-i18next"; // ✅ FIX
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
-export default function ProviderHeader() {
+export default function Header() {
   const navigate = useNavigate();
   const menuRef = useRef(null);
-
-  const { userData } = useAuth();
-  const { language, setLanguage } = useLanguage(); // ❌ remove t from here
-  const { t } = useTranslation(); // ✅ correct source of t
-
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [open, setOpen] = useState(false);
 
@@ -42,51 +37,15 @@ export default function ProviderHeader() {
   const getName = () => {
     if (user?.displayName) return user.displayName;
     if (user?.email) return user.email.split("@")[0];
-    return "Provider";
+    return "User";
   };
-
-  const getInitial = () => getName().charAt(0).toUpperCase();
 
   return (
     <header className="h-16 px-4 md:px-6 flex items-center justify-between border-b bg-white sticky top-0 z-40">
-      <h3 className="font-semibold text-base">ServiceConnect</h3>
+      <h3 className="font-semibold text-base">{t("appName")}</h3>
 
       <div className="flex items-center gap-4">
-        {/* 🌐 Global Language Switcher */}
-        <div className="flex items-center gap-1 text-sm">
-          <button
-            onClick={() => setLanguage("en")}
-            className={`px-2 py-1 rounded ${
-              language === "en"
-                ? "bg-blue-100 font-semibold"
-                : "hover:bg-gray-100"
-            }`}
-          >
-            EN
-          </button>
-
-          <button
-            onClick={() => setLanguage("hi")}
-            className={`px-2 py-1 rounded ${
-              language === "hi"
-                ? "bg-blue-100 font-semibold"
-                : "hover:bg-gray-100"
-            }`}
-          >
-            हिंदी
-          </button>
-
-          <button
-            onClick={() => setLanguage("te")}
-            className={`px-2 py-1 rounded ${
-              language === "te"
-                ? "bg-blue-100 font-semibold"
-                : "hover:bg-gray-100"
-            }`}
-          >
-            తెలుగు
-          </button>
-        </div>
+        <LanguageSwitcher />
 
         {user && (
           <div ref={menuRef} className="relative flex items-center gap-2">
@@ -94,11 +53,11 @@ export default function ProviderHeader() {
               onClick={() => setOpen((prev) => !prev)}
               className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold"
             >
-              {getInitial()}
+              {getName().charAt(0).toUpperCase()}
             </button>
 
             <span className="hidden md:inline text-sm text-gray-700">
-              {t("hi")}, {getName()} ({t("provider")})
+              {t("hi")}, {getName()}
             </span>
 
             {open && (

@@ -7,7 +7,14 @@ const notDeletedQuery = {
   $or: [{ deleted_at: null }, { deleted_at: { $exists: false } }],
 };
 
-/* ================= UTIL ================= */
+const resolveBusinessLevel = async (categoryId) => {
+  const category = await Category.findOne({
+    _id: categoryId,
+    ...notDeletedQuery,
+  }).select("businessLevel");
+
+  return category?.businessLevel || "INDIVIDUAL";
+};
 
 const generateUniqueSlug = async (name, categoryId) => {
   const baseSlug = slugify(name, { lower: true, strict: true, trim: true });
@@ -27,31 +34,34 @@ const generateUniqueSlug = async (name, categoryId) => {
   return slug;
 };
 
-/* ================= LIST ================= */
-
 exports.getSubCategories = async (req, res) => {
   try {
     const page = Math.max(parseInt(req.query.page) || 1, 1);
     const limit = Math.min(parseInt(req.query.limit) || 50, 100);
     const skip = (page - 1) * limit;
 
-    const { search = "", status } = req.query;
-
+    const { search = "", status, businessLevel } = req.query;
     const query = { ...notDeletedQuery };
 
     if (search) {
-      query.$or = [
-        ...(query.$or || []),
-        { name: { $regex: search, $options: "i" } },
-        { slug: { $regex: search, $options: "i" } },
+      query.$and = [
+        {
+          $or: [
+            { name: { $regex: search, $options: "i" } },
+            { slug: { $regex: search, $options: "i" } },
+          ],
+        },
       ];
     }
 
     if (status && status !== "all") query.status = status;
+    if (businessLevel && businessLevel !== "all") {
+      query.businessLevel = businessLevel;
+    }
 
     const [data, total] = await Promise.all([
       SubCategory.find(query)
-        .populate("category_id", "name")
+        .populate("category_id", "name businessLevel")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -68,27 +78,34 @@ exports.getSubCategories = async (req, res) => {
   }
 };
 
-/* ================= GET BY ID ================= */
-
 exports.getSubCategoryById = async (req, res) => {
   const subCategory = await SubCategory.findOne({
     _id: req.params.id,
     ...notDeletedQuery,
-  }).populate("category_id", "name");
+  }).populate("category_id", "name businessLevel");
 
-  if (!subCategory)
+  if (!subCategory) {
     return res.status(404).json({ message: "Sub-category not found" });
+  }
 
   res.json({ data: subCategory });
 };
 
-/* ================= CREATE ================= */
-
 exports.createSubCategory = async (req, res) => {
   const { name, category_id } = req.body;
 
-  if (!name || !category_id)
-    return res.status(400).json({ message: "Name & category required" });
+  if (!name || !category_id) {
+    return res.status(400).json({ message: "Name and category required" });
+  }
+
+  const category = await Category.findOne({
+    _id: category_id,
+    ...notDeletedQuery,
+  });
+
+  if (!category) {
+    return res.status(404).json({ message: "Parent category not found" });
+  }
 
   const slug = await generateUniqueSlug(name, category_id);
 
@@ -96,6 +113,7 @@ exports.createSubCategory = async (req, res) => {
     name,
     slug,
     category_id,
+    businessLevel: category.businessLevel,
     status: "active",
     createdBy: req.admin._id,
     deleted_at: null,
@@ -104,28 +122,43 @@ exports.createSubCategory = async (req, res) => {
   res.status(201).json({ data: subCategory });
 };
 
-/* ================= UPDATE ================= */
-
 exports.updateSubCategory = async (req, res) => {
   const subCategory = await SubCategory.findOne({
     _id: req.params.id,
     ...notDeletedQuery,
   });
 
-  if (!subCategory)
+  if (!subCategory) {
     return res.status(404).json({ message: "Sub-category not found" });
+  }
 
-  const { name, status } = req.body;
+  const { name, status, category_id } = req.body;
   if (name) subCategory.name = name;
   if (status) subCategory.status = status;
+
+  if (category_id && String(subCategory.category_id) !== String(category_id)) {
+    const category = await Category.findOne({
+      _id: category_id,
+      ...notDeletedQuery,
+    });
+
+    if (!category) {
+      return res.status(404).json({ message: "Parent category not found" });
+    }
+
+    subCategory.category_id = category_id;
+    subCategory.businessLevel = category.businessLevel;
+  }
+
+  if (!subCategory.businessLevel) {
+    subCategory.businessLevel = await resolveBusinessLevel(subCategory.category_id);
+  }
 
   subCategory.updatedBy = req.admin._id;
   await subCategory.save();
 
   res.json({ data: subCategory });
 };
-
-/* ================= TOGGLE STATUS (✅ ADDED) ================= */
 
 exports.toggleSubCategoryStatus = async (req, res) => {
   try {
@@ -134,12 +167,14 @@ exports.toggleSubCategoryStatus = async (req, res) => {
       ...notDeletedQuery,
     });
 
-    if (!subCategory)
+    if (!subCategory) {
       return res.status(404).json({ message: "Sub-category not found" });
+    }
 
-    subCategory.status =
-      subCategory.status === "active" ? "inactive" : "active";
-
+    subCategory.status = subCategory.status === "active" ? "inactive" : "active";
+    if (!subCategory.businessLevel) {
+      subCategory.businessLevel = await resolveBusinessLevel(subCategory.category_id);
+    }
     subCategory.updatedBy = req.admin._id;
     await subCategory.save();
 
@@ -153,18 +188,20 @@ exports.toggleSubCategoryStatus = async (req, res) => {
   }
 };
 
-/* ================= DELETE (SOFT) ================= */
-
 exports.deleteSubCategory = async (req, res) => {
   const subCategory = await SubCategory.findOne({
     _id: req.params.id,
     ...notDeletedQuery,
   });
 
-  if (!subCategory)
+  if (!subCategory) {
     return res.status(404).json({ message: "Sub-category not found" });
+  }
 
   subCategory.deleted_at = new Date();
+  if (!subCategory.businessLevel) {
+    subCategory.businessLevel = await resolveBusinessLevel(subCategory.category_id);
+  }
   subCategory.updatedBy = req.admin._id;
 
   await subCategory.save();
@@ -172,18 +209,17 @@ exports.deleteSubCategory = async (req, res) => {
   res.json({ success: true });
 };
 
-/* ================= BULK UPLOAD ================= */
-
 exports.bulkUploadSubCategories = async (req, res) => {
-  if (!req.file)
+  if (!req.file) {
     return res.status(400).json({ message: "Excel file required" });
+  }
 
   const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   const rows = XLSX.utils.sheet_to_json(sheet);
 
-  let created = 0,
-    skipped = 0;
+  let created = 0;
+  let skipped = 0;
 
   for (const row of rows) {
     if (!row.category || !row.sub_category) {
@@ -219,6 +255,7 @@ exports.bulkUploadSubCategories = async (req, res) => {
       name: row.sub_category,
       slug,
       category_id: parent._id,
+      businessLevel: parent.businessLevel,
       status: "active",
       createdBy: req.admin._id,
       deleted_at: null,

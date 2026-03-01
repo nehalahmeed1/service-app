@@ -1,7 +1,6 @@
 import { Trophy } from "lucide-react";
 
-// Temporary mock data (replace with API later)
-const categories = [
+const defaultCategories = [
   { name: "Home Cleaning", jobs: 120 },
   { name: "Plumbing", jobs: 92 },
   { name: "Electrical", jobs: 68 },
@@ -9,7 +8,12 @@ const categories = [
   { name: "Pest Control", jobs: 29 },
 ];
 
-const TopCategories = () => {
+const TopCategories = ({ data }) => {
+  const categories =
+    Array.isArray(data?.topCategories) && data.topCategories.length
+      ? data.topCategories
+      : defaultCategories;
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       {/* Header */}

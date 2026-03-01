@@ -6,7 +6,7 @@ export default function AuthRedirect() {
 
   if (loading) return null;
 
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/customer/home" replace />;
 
   if (role === "CUSTOMER") {
     return <Navigate to="/customer/home" replace />;
@@ -29,5 +29,5 @@ export default function AuthRedirect() {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  return <Navigate to="/login" replace />;
+  return <Navigate to="/customer/home" replace />;
 }

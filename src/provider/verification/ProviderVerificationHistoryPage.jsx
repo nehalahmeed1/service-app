@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet";
+import { useTranslation } from "react-i18next";
 import providerApi from "@/services/providerApi";
 
 function statusClass(status) {
@@ -10,7 +11,21 @@ function statusClass(status) {
   return "bg-amber-100 text-amber-700";
 }
 
+function statusKey(status) {
+  if (status === "APPROVED") return "verified";
+  return String(status || "PENDING").toLowerCase();
+}
+
+function actionKey(action) {
+  return `audit_action_${String(action || "").toLowerCase()}`;
+}
+
+function sectionLabelKey(section) {
+  return String(section || "").toLowerCase();
+}
+
 export default function ProviderVerificationHistoryPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [timeline, setTimeline] = useState([]);
@@ -27,7 +42,7 @@ export default function ProviderVerificationHistoryPage() {
         setProviderStatus(data.providerStatus || "PENDING");
       } catch (err) {
         console.error(err);
-        setError("Failed to load verification history");
+        setError(t("failed_load_verification_history"));
       } finally {
         setLoading(false);
       }
@@ -38,16 +53,16 @@ export default function ProviderVerificationHistoryPage() {
   return (
     <>
       <Helmet>
-        <title>Verification History</title>
+        <title>{t("verification_history")}</title>
       </Helmet>
 
       <main className="space-y-5">
         <section className="rounded-2xl border bg-white p-5">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Verification History</h1>
+              <h1 className="text-2xl font-bold">{t("verification_history")}</h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Timeline of document verification and admin decisions.
+                {t("verification_history_subtitle")}
               </p>
             </div>
             <span
@@ -55,17 +70,17 @@ export default function ProviderVerificationHistoryPage() {
                 providerStatus
               )}`}
             >
-              {providerStatus}
+              {t(statusKey(providerStatus))}
             </span>
           </div>
         </section>
 
-        {loading ? <p className="text-sm">Loading history...</p> : null}
+        {loading ? <p className="text-sm">{t("loading_history")}</p> : null}
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
         {!loading && !error && timeline.length === 0 ? (
           <div className="rounded-xl border bg-white p-4 text-sm text-muted-foreground">
-            No verification events yet.
+            {t("no_verification_events")}
           </div>
         ) : null}
 
@@ -74,9 +89,9 @@ export default function ProviderVerificationHistoryPage() {
             <article key={event.id} className="rounded-xl border bg-white p-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div>
-                  <p className="font-semibold">{event.action}</p>
+                  <p className="font-semibold">{t(actionKey(event.action), { defaultValue: event.action })}</p>
                   <p className="text-xs text-muted-foreground">
-                    {event.section ? `Section: ${event.section}` : "Final decision"}
+                    {event.section ? `${t("section")}: ${t(sectionLabelKey(event.section), { defaultValue: event.section })}` : t("final_decision")}
                   </p>
                 </div>
                 <span
@@ -84,19 +99,19 @@ export default function ProviderVerificationHistoryPage() {
                     event.status
                   )}`}
                 >
-                  {event.status || "PENDING"}
+                  {t(statusKey(event.status))}
                 </span>
               </div>
 
               {event.remarks ? (
                 <p className="mt-2 text-sm">
-                  <strong>Remarks:</strong> {event.remarks}
+                  <strong>{t("remarks")}:</strong> {event.remarks}
                 </p>
               ) : null}
 
               <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
                 <span>{new Date(event.createdAt).toLocaleString()}</span>
-                {event.admin?.name ? <span>By: {event.admin.name}</span> : null}
+                {event.admin?.name ? <span>{t("by")}: {event.admin.name}</span> : null}
               </div>
             </article>
           ))}

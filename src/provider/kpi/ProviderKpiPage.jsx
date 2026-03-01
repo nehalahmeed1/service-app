@@ -1,9 +1,16 @@
 import { Helmet } from "react-helmet";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import providerApi from "@/services/providerApi";
 import Icon from "@/components/AppIcon";
 
+function statusKey(status) {
+  if (status === "APPROVED") return "verified";
+  return String(status || "PENDING").toLowerCase();
+}
+
 export default function ProviderKpiPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [metrics, setMetrics] = useState(null);
@@ -19,7 +26,7 @@ export default function ProviderKpiPage() {
         setProviderStatus(res.data?.data?.providerStatus || "PENDING");
       } catch (err) {
         console.error(err);
-        setError("Failed to load KPI metrics");
+        setError(t("failed_load_kpi_metrics"));
       } finally {
         setLoading(false);
       }
@@ -30,25 +37,25 @@ export default function ProviderKpiPage() {
 
   const cards = [
     {
-      label: "Profile Completeness",
+      label: t("profile_completeness"),
       value: `${metrics?.profileCompleteness ?? 0}%`,
       icon: "UserRoundCheck",
       tone: "from-blue-600/10 to-indigo-600/5",
     },
     {
-      label: "Uploaded Sections",
+      label: t("uploaded_sections"),
       value: `${metrics?.uploadedSections ?? 0}/5`,
       icon: "FolderCheck",
       tone: "from-emerald-600/10 to-green-600/5",
     },
     {
-      label: "Verified Sections",
+      label: t("verified_sections"),
       value: metrics?.verifiedSections ?? 0,
       icon: "BadgeCheck",
       tone: "from-cyan-600/10 to-sky-600/5",
     },
     {
-      label: "Total Documents",
+      label: t("total_documents"),
       value: metrics?.totalDocuments ?? 0,
       icon: "Files",
       tone: "from-violet-600/10 to-fuchsia-600/5",
@@ -58,21 +65,21 @@ export default function ProviderKpiPage() {
   return (
     <>
       <Helmet>
-        <title>Provider KPI Analytics</title>
+        <title>{t("provider_kpi_analytics")}</title>
       </Helmet>
 
       <main className="space-y-6">
         <section className="rounded-2xl border bg-white p-6">
-          <h1 className="text-2xl font-bold">KPI Analytics</h1>
+          <h1 className="text-2xl font-bold">{t("kpi_analytics")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Live provider analytics from backend verification and profile data.
+            {t("kpi_analytics_subtitle")}
           </p>
           <p className="text-xs mt-2">
-            <strong>Account Status:</strong> {providerStatus}
+            <strong>{t("account_status")}:</strong> {t(statusKey(providerStatus))}
           </p>
         </section>
 
-        {loading ? <p className="text-sm">Loading metrics...</p> : null}
+        {loading ? <p className="text-sm">{t("loading_metrics")}</p> : null}
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
         {!loading && !error && (
@@ -94,20 +101,20 @@ export default function ProviderKpiPage() {
 
             <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               <div className="rounded-xl border bg-white p-5">
-                <h2 className="font-semibold text-lg mb-3">Verification Mix</h2>
+                <h2 className="font-semibold text-lg mb-3">{t("verification_mix")}</h2>
                 <div className="space-y-3 text-sm">
-                  <Row label="Pending Sections" value={metrics?.pendingSections ?? 0} />
-                  <Row label="Rejected Sections" value={metrics?.rejectedSections ?? 0} />
-                  <Row label="Verified Actions" value={metrics?.verifiedActionCount ?? 0} />
-                  <Row label="Rejection Events" value={metrics?.rejectionCount ?? 0} />
+                  <Row label={t("pending_sections")} value={metrics?.pendingSections ?? 0} />
+                  <Row label={t("rejected_sections")} value={metrics?.rejectedSections ?? 0} />
+                  <Row label={t("verified_actions")} value={metrics?.verifiedActionCount ?? 0} />
+                  <Row label={t("rejection_events")} value={metrics?.rejectionCount ?? 0} />
                 </div>
               </div>
 
               <div className="rounded-xl border bg-white p-5">
-                <h2 className="font-semibold text-lg mb-3">Account Health</h2>
+                <h2 className="font-semibold text-lg mb-3">{t("account_health")}</h2>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Profile Quality</span>
+                    <span className="text-muted-foreground">{t("profile_quality")}</span>
                     <span className="font-medium">{metrics?.profileCompleteness ?? 0}%</span>
                   </div>
                   <div className="h-2 rounded-full bg-gray-100">
@@ -117,7 +124,7 @@ export default function ProviderKpiPage() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    Account age: {metrics?.accountAgeDays ?? 0} day(s)
+                    {t("account_age")}: {metrics?.accountAgeDays ?? 0} {t("days")}
                   </p>
                 </div>
               </div>

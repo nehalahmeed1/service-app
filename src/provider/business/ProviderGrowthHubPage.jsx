@@ -1,39 +1,40 @@
 import { Helmet } from "react-helmet";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Icon from "@/components/AppIcon";
 
-const playbooks = [
-  {
-    title: "Increase repeat bookings",
-    detail: "Offer 7-day follow-up and proactive reminders after each job.",
-    icon: "Repeat2",
-  },
-  {
-    title: "Improve profile trust",
-    detail: "Keep profile, verification, and service photos updated monthly.",
-    icon: "ShieldCheck",
-  },
-  {
-    title: "Boost conversion rate",
-    detail: "Respond to requests within 5 minutes during business hours.",
-    icon: "Rocket",
-  },
-];
-
 export default function ProviderGrowthHubPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const playbooks = [
+    {
+      title: t("increase_repeat_bookings"),
+      detail: t("increase_repeat_bookings_desc"),
+      icon: "Repeat2",
+    },
+    {
+      title: t("improve_profile_trust"),
+      detail: t("improve_profile_trust_desc"),
+      icon: "ShieldCheck",
+    },
+    {
+      title: t("boost_conversion_rate"),
+      detail: t("boost_conversion_rate_desc"),
+      icon: "Rocket",
+    },
+  ];
 
   return (
     <>
       <Helmet>
-        <title>Provider Growth Hub</title>
+        <title>{t("growth_hub")}</title>
       </Helmet>
 
       <main className="space-y-6">
         <section className="rounded-2xl border bg-white p-6">
-          <h1 className="text-2xl font-bold">Growth Hub</h1>
+          <h1 className="text-2xl font-bold">{t("growth_hub")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Playbooks and controls to grow revenue and service quality.
+            {t("growth_hub_subtitle")}
           </p>
         </section>
 
@@ -50,30 +51,30 @@ export default function ProviderGrowthHubPage() {
         </section>
 
         <section className="rounded-xl border bg-white p-5">
-          <h2 className="font-semibold text-lg mb-4">Action Center</h2>
+          <h2 className="font-semibold text-lg mb-4">{t("action_center")}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <ActionBtn
-              label="Edit Services"
+              label={t("edit_services")}
               onClick={() => navigate("/provider/services")}
               icon="ClipboardEdit"
             />
             <ActionBtn
-              label="Manage Schedule"
+              label={t("provider_manage_schedule")}
               onClick={() => navigate("/provider/schedule")}
               icon="CalendarClock"
             />
             <ActionBtn
-              label="Verification Center"
+              label={t("verification_center")}
               onClick={() => navigate("/provider/verification-center")}
               icon="BadgeCheck"
             />
             <ActionBtn
-              label="Profile Settings"
+              label={t("profile_settings")}
               onClick={() => navigate("/provider/profile/edit")}
               icon="UserRoundCog"
             />
             <ActionBtn
-              label="Verification History"
+              label={t("verification_history")}
               onClick={() => navigate("/provider/verification-history")}
               icon="History"
             />

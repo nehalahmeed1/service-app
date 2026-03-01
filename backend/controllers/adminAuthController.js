@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const Admin = require("../models/Admin");
+const firebaseAdmin = require("../config/firebaseAdmin");
 
 /**
  * =====================================
@@ -11,21 +12,40 @@ const Admin = require("../models/Admin");
 const registerAdmin = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
     // Basic validation
-    if (!name || !email || !password) {
+    if (!name || !normalizedEmail || !password) {
       return res.status(400).json({
         message: "All fields are required",
       });
     }
 
     // Check if admin already exists
-    const existingAdmin = await Admin.findOne({ email });
+    const existingAdmin = await Admin.findOne({ email: normalizedEmail });
     if (existingAdmin) {
       return res.status(400).json({
         message: "Admin already exists",
       });
     }
+
+    // Ensure same admin credentials exist in Firebase Auth for web login.
+    try {
+      await firebaseAdmin.auth().getUserByEmail(normalizedEmail);
+      return res.status(400).json({
+        message: "Email already exists in authentication provider",
+      });
+    } catch (firebaseLookupError) {
+      if (firebaseLookupError.code !== "auth/user-not-found") {
+        throw firebaseLookupError;
+      }
+    }
+
+    await firebaseAdmin.auth().createUser({
+      email: normalizedEmail,
+      password,
+      displayName: name,
+    });
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -33,7 +53,7 @@ const registerAdmin = async (req, res) => {
     // Create admin
     const admin = await Admin.create({
       name,
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
       role: "ADMIN",       // or SUPER_ADMIN
       status: "APPROVED",  // change to PENDING if approval flow needed
@@ -71,16 +91,17 @@ const registerAdmin = async (req, res) => {
 const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
     // Validate
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return res.status(400).json({
         message: "Email and password are required",
       });
     }
 
     // Find admin
-    const admin = await Admin.findOne({ email });
+    const admin = await Admin.findOne({ email: normalizedEmail });
     if (!admin) {
       return res.status(401).json({
         message: "Invalid email or password",
@@ -93,6 +114,21 @@ const loginAdmin = async (req, res) => {
       return res.status(401).json({
         message: "Invalid email or password",
       });
+    }
+
+    // Backfill Firebase Auth user for legacy admins created before sync support.
+    try {
+      await firebaseAdmin.auth().getUserByEmail(normalizedEmail);
+    } catch (firebaseLookupError) {
+      if (firebaseLookupError.code === "auth/user-not-found") {
+        await firebaseAdmin.auth().createUser({
+          email: normalizedEmail,
+          password,
+          displayName: admin.name,
+        });
+      } else {
+        throw firebaseLookupError;
+      }
     }
 
     return res.status(200).json({

@@ -16,11 +16,29 @@ export const fetchPendingProviders = async (params = {}) => {
 };
 
 /**
+ * Fetch admin notifications for provider onboarding updates
+ * GET /api/admin/approvals/notifications
+ */
+export const fetchApprovalNotifications = async () => {
+  const res = await adminApi.get("/admin/approvals/notifications");
+  return res.data.data;
+};
+
+/**
  * Fetch single provider details
  * GET /api/admin/approvals/providers/:id
  */
 export const fetchProviderById = async (id) => {
   const res = await adminApi.get(`/admin/approvals/providers/${id}`);
+  return res.data.data;
+};
+
+/**
+ * Fetch provider audit trail
+ * GET /api/admin/approvals/providers/:id/audit
+ */
+export const fetchProviderAuditTrail = async (id) => {
+  const res = await adminApi.get(`/admin/approvals/providers/${id}/audit`);
   return res.data.data;
 };
 

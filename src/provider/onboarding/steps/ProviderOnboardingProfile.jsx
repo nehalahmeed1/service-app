@@ -4,7 +4,11 @@ import providerApi from "@/services/providerApi";
 
 const API_BASE = "http://localhost:5000";
 
-export default function ProviderOnboardingProfile({ onNext, initialData }) {
+export default function ProviderOnboardingProfile({
+  onNext,
+  initialData,
+  stayOnSave = false,
+}) {
   const { t } = useTranslation();
 
   const [form, setForm] = useState({
@@ -52,12 +56,15 @@ export default function ProviderOnboardingProfile({ onNext, initialData }) {
 
   const handleNext = async () => {
     if (!form.fullName || !form.phone || (!form.profilePhoto && !form.preview)) {
-      alert("Please complete all required fields");
+      alert(t("please_complete_required_fields"));
       return;
     }
 
     if (!form.profilePhoto && form.preview) {
-      onNext();
+        onNext();
+      if (stayOnSave) {
+        alert(t("saved"));
+      }
       return;
     }
 
@@ -71,9 +78,12 @@ export default function ProviderOnboardingProfile({ onNext, initialData }) {
 
       await providerApi.post("/provider/onboarding/profile", formData);
       onNext();
+      if (stayOnSave) {
+        alert(t("saved"));
+      }
     } catch (error) {
       console.error(error);
-      alert("Failed to upload profile details");
+      alert(t("failed_upload_profile_details"));
     } finally {
       setLoading(false);
     }
@@ -95,12 +105,12 @@ export default function ProviderOnboardingProfile({ onNext, initialData }) {
               className="h-full w-full object-cover"
             />
           ) : (
-            <span className="text-xs text-gray-500 text-center">Profile Photo</span>
+            <span className="text-xs text-gray-500 text-center">{t("profile_photo")}</span>
           )}
         </div>
 
         <label className="cursor-pointer text-sm text-primary font-medium">
-          Upload Photo
+          {t("upload_photo")}
           <input
             type="file"
             accept="image/*"
@@ -134,7 +144,7 @@ export default function ProviderOnboardingProfile({ onNext, initialData }) {
           onClick={handleNext}
           className="bg-primary text-white px-6 py-2 rounded-lg hover:opacity-90 transition"
         >
-          {loading ? "Uploading..." : t("next")}
+          {loading ? t("saving") : stayOnSave ? t("save") : t("next")}
         </button>
       </div>
     </div>

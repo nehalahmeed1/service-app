@@ -3,22 +3,21 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function RoleRoute({ allowedRole, children }) {
   const { user, role, loading, providerOnboardingCompleted } = useAuth();
+  const providerToken = sessionStorage.getItem("provider_token");
+  const activeRole = sessionStorage.getItem("active_role");
 
-  // ⏳ Wait until auth is ready
   if (loading) {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
-        Checking permissions…
+        Checking permissions...
       </div>
     );
   }
 
-  // ❌ Not logged in
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={allowedRole === "PROVIDER" ? "/provider/login" : "/login"} replace />;
   }
 
-  // Wait for role bootstrap to avoid redirecting to login right after register/login.
   if (!role) {
     return (
       <div style={{ padding: 40, textAlign: "center" }}>
@@ -27,7 +26,6 @@ export default function RoleRoute({ allowedRole, children }) {
     );
   }
 
-  // ❌ Wrong role → redirect properly
   if (role !== allowedRole) {
     if (role === "CUSTOMER") {
       return <Navigate to="/customer/home" replace />;
@@ -53,6 +51,17 @@ export default function RoleRoute({ allowedRole, children }) {
     return <Navigate to="/login" replace />;
   }
 
-  // ✅ Correct role
+  if (allowedRole === "PROVIDER") {
+    const validProviderSession =
+      !!providerToken &&
+      providerToken !== "undefined" &&
+      providerToken !== "null" &&
+      activeRole === "PROVIDER";
+
+    if (!validProviderSession) {
+      return <Navigate to="/provider/login" replace />;
+    }
+  }
+
   return children;
 }

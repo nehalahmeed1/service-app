@@ -4,17 +4,19 @@ import { initReactI18next } from "react-i18next";
 import en from "./locales/en.json";
 import hi from "./locales/hi.json";
 import te from "./locales/te.json";
+import hiProvider from "./locales/hi_provider.json";
+import teProvider from "./locales/te_provider.json";
 
 const resources = {
   en: { translation: en },
-  hi: { translation: hi },
-  te: { translation: te },
+  hi: { translation: { ...hi, ...hiProvider } },
+  te: { translation: { ...te, ...teProvider } },
 };
 
 i18n.use(initReactI18next).init({
   resources,
 
-  lng: "en", // neutral boot language
+  lng: localStorage.getItem("app_language") || "en",
 
   fallbackLng: "en",
 

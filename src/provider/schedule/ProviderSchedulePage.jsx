@@ -100,7 +100,7 @@ const ProviderSchedulePage = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex flex-col gap-1">
                   <label className="text-sm text-muted-foreground">
-                    Start Time
+                    {t("start_time")}
                   </label>
                   <input
                     type="time"
@@ -114,7 +114,7 @@ const ProviderSchedulePage = () => {
 
                 <div className="flex flex-col gap-1">
                   <label className="text-sm text-muted-foreground">
-                    End Time
+                    {t("end_time")}
                   </label>
                   <input
                     type="time"

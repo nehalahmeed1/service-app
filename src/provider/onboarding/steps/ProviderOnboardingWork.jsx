@@ -1,16 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
-import { fetchPublicCategories } from "@/services/categoryService";
+import { useTranslation } from "react-i18next";
+import {
+  fetchPublicCategories,
+  fetchPublicSubCategories,
+} from "@/services/categoryService";
 import providerApi from "@/services/providerApi";
 
 const API_BASE = "http://localhost:5000";
 
-export default function ProviderOnboardingWork({ onNext, onBack, initialData }) {
+export default function ProviderOnboardingWork({
+  onNext,
+  onBack,
+  initialData,
+  stayOnSave = false,
+}) {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
+  const [subCategories, setSubCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingSubCategories, setLoadingSubCategories] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     categoryId: "",
+    subCategoryId: "",
     experienceYears: "",
     workImages: [],
     certificate: null,
@@ -40,6 +53,7 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
     setForm((prev) => ({
       ...prev,
       categoryId: section.categoryId || prev.categoryId,
+      subCategoryId: section.subCategoryId || prev.subCategoryId,
       experienceYears:
         section.experienceYears !== undefined
           ? String(section.experienceYears)
@@ -50,6 +64,30 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
       docs.map((doc) => (doc.startsWith("http") ? doc : `${API_BASE}${doc}`))
     );
   }, [initialData]);
+
+  useEffect(() => {
+    const loadSubCategories = async () => {
+      if (!form.categoryId) {
+        setSubCategories([]);
+        return;
+      }
+
+      try {
+        setLoadingSubCategories(true);
+        const data = await fetchPublicSubCategories({
+          categoryId: form.categoryId,
+        });
+        setSubCategories(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to load sub-categories", err);
+        setSubCategories([]);
+      } finally {
+        setLoadingSubCategories(false);
+      }
+    };
+
+    loadSubCategories();
+  }, [form.categoryId]);
 
   const handleFileChange = (e) => {
     const { name, files } = e.target;
@@ -93,6 +131,7 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
   const canProceed =
     !loadingCategories &&
     form.categoryId &&
+    (subCategories.length === 0 || form.subCategoryId) &&
     form.experienceYears &&
     (form.workImages.length > 0 || existingDocs.length > 0);
 
@@ -101,6 +140,9 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
 
     if (form.workImages.length === 0 && existingDocs.length > 0) {
       onNext();
+      if (stayOnSave) {
+        alert(t("saved"));
+      }
       return;
     }
 
@@ -108,6 +150,9 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
       setLoading(true);
       const formData = new FormData();
       formData.append("categoryId", form.categoryId);
+      if (form.subCategoryId) {
+        formData.append("subCategoryId", form.subCategoryId);
+      }
       formData.append("experienceYears", form.experienceYears);
       form.workImages.forEach((file) =>
         formData.append("workImages", file)
@@ -118,9 +163,12 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
 
       await providerApi.post("/provider/onboarding/work", formData);
       onNext();
+      if (stayOnSave) {
+        alert(t("saved"));
+      }
     } catch (err) {
       console.error(err);
-      alert("Failed to upload work verification details");
+      alert(t("failed_upload_work_details"));
     } finally {
       setLoading(false);
     }
@@ -129,16 +177,16 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Work Verification</h2>
+        <h2 className="text-2xl font-semibold">{t("work_verification")}</h2>
         <p className="text-muted-foreground">
-          Upload your work samples and experience details
+          {t("work_verification_subtitle")}
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">
-            Service Category
+            {t("service_category")}
           </label>
 
           <select
@@ -148,12 +196,13 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
               setForm((prev) => ({
                 ...prev,
                 categoryId: e.target.value,
+                subCategoryId: "",
               }))
             }
             className="w-full border rounded-lg px-4 py-2 disabled:bg-gray-100"
           >
             <option value="">
-              {loadingCategories ? "Loading categories..." : "Select category"}
+              {loadingCategories ? t("loading_categories") : t("select_category")}
             </option>
 
             {categories.map((cat) => (
@@ -165,14 +214,44 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
 
           {!loadingCategories && categories.length === 0 && (
             <p className="text-xs text-red-500 mt-1">
-              No active categories available
+              {t("no_active_categories")}
             </p>
           )}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1">
-            Years of Experience
+            Sub-category
+          </label>
+
+          <select
+            value={form.subCategoryId}
+            disabled={!form.categoryId || loadingSubCategories || loading}
+            onChange={(e) =>
+              setForm((prev) => ({
+                ...prev,
+                subCategoryId: e.target.value,
+              }))
+            }
+            className="w-full border rounded-lg px-4 py-2 disabled:bg-gray-100"
+          >
+            <option value="">
+              {loadingSubCategories
+                ? "Loading sub-categories..."
+                : "Select sub-category"}
+            </option>
+
+            {subCategories.map((sub) => (
+              <option key={sub._id} value={sub._id}>
+                {sub.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            {t("years_of_experience")}
           </label>
           <input
             type="number"
@@ -185,14 +264,14 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
               }))
             }
             className="w-full border rounded-lg px-4 py-2"
-            placeholder="e.g. 3"
+            placeholder={t("example_3")}
           />
         </div>
       </div>
 
       <div>
         <label className="block text-sm font-medium mb-1">
-          Work Images (Upload multiple)
+          {t("work_images_upload_multiple")}
         </label>
         <input
           type="file"
@@ -202,7 +281,7 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
         />
         {form.workImages.length === 0 && (
           <p className="text-xs text-muted-foreground mt-1">
-            At least one image is required
+            {t("at_least_one_image_required")}
           </p>
         )}
         {workImagePreviews.length > 0 && (
@@ -223,7 +302,7 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
               <img
                 key={url}
                 src={url}
-                alt="Existing Work"
+                alt={t("existing_work")}
                 className="h-24 w-full object-cover border rounded"
               />
             ))}
@@ -233,7 +312,7 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
 
       <div>
         <label className="block text-sm font-medium mb-1">
-          Certificate (Optional)
+          {t("certificate_optional")}
         </label>
         <input
           type="file"
@@ -251,13 +330,15 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
         )}
       </div>
 
-      <div className="flex justify-between pt-4">
-        <button
-          onClick={onBack}
-          className="px-6 py-2 rounded-lg border"
-        >
-          Back
-        </button>
+      <div className={`flex pt-4 ${stayOnSave ? "justify-end" : "justify-between"}`}>
+        {!stayOnSave && (
+          <button
+            onClick={onBack}
+            className="px-6 py-2 rounded-lg border"
+          >
+            {t("back")}
+          </button>
+        )}
 
         <button
           onClick={handleNext}
@@ -268,7 +349,7 @@ export default function ProviderOnboardingWork({ onNext, onBack, initialData }) 
               : "bg-gray-400 cursor-not-allowed"
           }`}
         >
-          {loading ? "Uploading..." : "Next"}
+          {loading ? t("saving") : stayOnSave ? t("save") : t("next")}
         </button>
       </div>
     </div>

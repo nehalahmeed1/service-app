@@ -23,11 +23,18 @@ const providerFirebaseLogin = async (req, res) => {
 
     const decoded = await admin.auth().verifyIdToken(firebaseToken);
     const { uid, email } = decoded;
+    const normalizedEmail = (email || "").trim().toLowerCase();
 
-    const provider = await Provider.findOne({ firebaseUid: uid });
+    const provider = await Provider.findOne({
+      $or: [{ firebaseUid: uid }, ...(normalizedEmail ? [{ email: normalizedEmail }] : [])],
+    });
 
     if (!provider) {
       return res.status(403).json({ message: "Provider not registered" });
+    }
+
+    if (provider.firebaseUid !== uid) {
+      provider.firebaseUid = uid;
     }
 
     const sections = [
@@ -54,9 +61,11 @@ const providerFirebaseLogin = async (req, res) => {
       provider.status === "APPROVED" ||
       hasSubmittedOnboarding;
 
-    // Backfill legacy providers so redirects stay consistent.
-    if (isOnboardingCompleted && !provider.onboardingCompleted) {
-      provider.onboardingCompleted = true;
+    // Backfill legacy providers to keep redirects/session consistent.
+    if ((isOnboardingCompleted && !provider.onboardingCompleted) || provider.isModified("firebaseUid")) {
+      if (isOnboardingCompleted && !provider.onboardingCompleted) {
+        provider.onboardingCompleted = true;
+      }
       await provider.save();
     }
 

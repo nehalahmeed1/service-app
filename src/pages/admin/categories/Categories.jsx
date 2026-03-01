@@ -13,6 +13,7 @@ export default function Categories() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [businessLevelFilter, setBusinessLevelFilter] = useState("all");
 
   const fetchCategories = async (page = 1) => {
     try {
@@ -23,6 +24,7 @@ export default function Categories() {
         limit: 10,
         search,
         status: statusFilter,
+        businessLevel: businessLevelFilter,
       });
 
       setCategories(res.data.data);
@@ -36,7 +38,7 @@ export default function Categories() {
 
   useEffect(() => {
     fetchCategories(1);
-  }, [search, statusFilter]);
+  }, [search, statusFilter, businessLevelFilter]);
 
   return (
     <div className="p-6 space-y-6">
@@ -74,6 +76,17 @@ export default function Categories() {
           <option value="all">All</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
+        </select>
+
+        <select
+          className="border p-2 rounded"
+          value={businessLevelFilter}
+          onChange={(e) => setBusinessLevelFilter(e.target.value)}
+        >
+          <option value="all">All Levels</option>
+          <option value="INDIVIDUAL">Individual</option>
+          <option value="SMALL_TEAM">Small Team</option>
+          <option value="ENTERPRISE">Enterprise</option>
         </select>
       </div>
 

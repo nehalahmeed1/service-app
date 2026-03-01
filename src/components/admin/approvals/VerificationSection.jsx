@@ -26,6 +26,7 @@ export default function VerificationSection({
   title,
   sectionKey,
   data = {},
+  auditData = null,
   providerId,
   onUpdate,
 }) {
@@ -65,6 +66,14 @@ export default function VerificationSection({
   const docs = Array.isArray(data.documents) ? data.documents : [];
   const hasAnyData = scalarRows.length > 0 || docs.length > 0;
   const isAlreadyVerified = data.status === "VERIFIED";
+  const createdAt = auditData?.createdAt || data.createdAt || null;
+  const updatedAt = auditData?.updatedAt || data.updatedAt || null;
+  const submittedAt = auditData?.submittedAt || data.submittedAt || null;
+  const verifiedAt = auditData?.verifiedAt || data.verifiedAt || null;
+  const verifiedByName =
+    auditData?.verifiedBy?.name || data.verifiedBy?.name || null;
+  const submittedBy = auditData?.submittedBy || data.submittedBy || null;
+  const lastAction = auditData?.lastAction || data.lastAction || null;
 
   return (
     <div className="bg-white shadow rounded p-4 space-y-4">
@@ -125,6 +134,47 @@ export default function VerificationSection({
         <p className="text-sm text-gray-500">
           No details or documents uploaded yet for this section.
         </p>
+      )}
+
+      {(createdAt || updatedAt || submittedAt || verifiedAt || verifiedByName) && (
+        <div className="rounded border bg-gray-50 p-3 text-xs text-gray-700 space-y-1">
+          <p className="font-semibold text-gray-900">Audit</p>
+          {lastAction ? (
+            <p>
+              <strong>Last Action:</strong> {lastAction}
+            </p>
+          ) : null}
+          {createdAt ? (
+            <p>
+              <strong>Created At:</strong> {new Date(createdAt).toLocaleString()}
+            </p>
+          ) : null}
+          {updatedAt ? (
+            <p>
+              <strong>Updated At:</strong> {new Date(updatedAt).toLocaleString()}
+            </p>
+          ) : null}
+          {submittedAt ? (
+            <p>
+              <strong>Submitted At:</strong> {new Date(submittedAt).toLocaleString()}
+            </p>
+          ) : null}
+          {submittedBy ? (
+            <p>
+              <strong>Submitted By:</strong> {submittedBy}
+            </p>
+          ) : null}
+          {verifiedAt ? (
+            <p>
+              <strong>Verified At:</strong> {new Date(verifiedAt).toLocaleString()}
+            </p>
+          ) : null}
+          {verifiedByName ? (
+            <p>
+              <strong>Verified By:</strong> {verifiedByName}
+            </p>
+          ) : null}
+        </div>
       )}
 
       {error && <p className="text-red-600 text-sm">{error}</p>}

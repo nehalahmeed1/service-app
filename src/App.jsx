@@ -2,7 +2,6 @@ import { Routes, Route, Navigate } from "react-router-dom";
 
 /* ================= AUTH ================= */
 import Login from "./pages/login";
-import Register from "./pages/register";
 
 /* ================= ADMIN AUTH ================= */
 import AdminRegister from "./pages/admin/auth/AdminRegister";
@@ -21,6 +20,14 @@ import EditCategory from "./pages/admin/categories/EditCategory";
 import SubCategories from "./pages/admin/subCategories/SubCategories";
 import CreateSubCategory from "./pages/admin/subCategories/CreateSubCategory";
 import EditSubCategory from "./pages/admin/subCategories/EditSubCategory";
+import ProviderList from "./pages/admin/providers/ProviderList";
+import CustomerList from "./pages/admin/customers/CustomerList";
+import Reports from "./pages/admin/reports/Reports";
+import ServiceRequests from "./pages/admin/service-requests/ServiceRequests";
+import Payments from "./pages/admin/payments/Payments";
+import AuditLogs from "./pages/admin/audit-logs/AuditLogs";
+import CompletedJobsEvidence from "./pages/admin/completed-jobs/CompletedJobsEvidence";
+import AdminBookings from "./pages/admin/bookings/AdminBookings";
 
 /* ================= REGISTER ================= */
 import CustomerRegister from "./pages/register/customer";
@@ -31,6 +38,10 @@ import ServiceProviderSearch from "./pages/service-provider-search";
 import ServiceProviderProfile from "./pages/service-provider-profile";
 import CustomerProfile from "./pages/customer-profile";
 import EditCustomerProfile from "./pages/customer-profile/edit";
+import ServiceCategoryPage from "./pages/customer-services/ServiceCategoryPage";
+import ServiceBookingPage from "./pages/customer-services/ServiceBookingPage";
+import ServiceSubCategoryDetailsPage from "./pages/customer-services/ServiceSubCategoryDetailsPage";
+import CustomerBookingsPage from "./pages/customer-bookings";
 
 /* ================= PROVIDER ================= */
 import ProviderDashboard from "./pages/provider-dashboard";
@@ -66,7 +77,8 @@ export default function App() {
     <Routes>
       {/* ================= PUBLIC ================= */}
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/provider/login" element={<Login />} />
+      <Route path="/register" element={<Navigate to="/register/customer" replace />} />
 
       {/* ================= ADMIN AUTH ================= */}
       <Route path="/admin/login" element={<AdminLogin />} />
@@ -92,9 +104,14 @@ export default function App() {
           <Route path="sub-categories/create" element={<CreateSubCategory />} />
           <Route path="sub-categories/:id/edit" element={<EditSubCategory />} />
 
-          <Route path="providers" element={<div>Providers</div>} />
-          <Route path="customers" element={<div>Customers</div>} />
-          <Route path="reports" element={<div>Reports</div>} />
+          <Route path="providers" element={<ProviderList />} />
+          <Route path="customers" element={<CustomerList />} />
+          <Route path="service-requests" element={<ServiceRequests />} />
+          <Route path="bookings" element={<AdminBookings />} />
+          <Route path="completed-jobs" element={<CompletedJobsEvidence />} />
+          <Route path="payments" element={<Payments />} />
+          <Route path="audit-logs" element={<AuditLogs />} />
+          <Route path="reports" element={<Reports />} />
         </Route>
       </Route>
 
@@ -106,24 +123,27 @@ export default function App() {
       <Route element={<MainLayout />}>
         <Route
           path="/customer/home"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRole="CUSTOMER">
-                <ServiceProviderSearch />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
+          element={<ServiceProviderSearch />}
         />
 
         <Route
           path="/customer/provider/:providerId"
-          element={
-            <ProtectedRoute>
-              <RoleRoute allowedRole="CUSTOMER">
-                <ServiceProviderProfile />
-              </RoleRoute>
-            </ProtectedRoute>
-          }
+          element={<ServiceProviderProfile />}
+        />
+
+        <Route
+          path="/customer/services/:serviceSlug"
+          element={<ServiceCategoryPage />}
+        />
+
+        <Route
+          path="/customer/services/:serviceSlug/book"
+          element={<ServiceBookingPage />}
+        />
+
+        <Route
+          path="/customer/services/:serviceSlug/details/:subSlug"
+          element={<ServiceSubCategoryDetailsPage />}
         />
 
         <Route
@@ -147,12 +167,23 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/customer/bookings"
+          element={
+            <ProtectedRoute>
+              <RoleRoute allowedRole="CUSTOMER">
+                <CustomerBookingsPage />
+              </RoleRoute>
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       {/* ================= PROVIDER DASHBOARD ================= */}
       <Route
         element={
-          <ProtectedRoute>
+          <ProtectedRoute redirectTo="/provider/login">
             <RoleRoute allowedRole="PROVIDER">
               <ProviderLayout />
             </RoleRoute>
@@ -191,7 +222,7 @@ export default function App() {
 
       {/* ================= ROOT ================= */}
       <Route path="/" element={<AuthRedirect />} />
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/customer/home" replace />} />
     </Routes>
   );
 }

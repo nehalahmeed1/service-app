@@ -11,7 +11,11 @@ exports.registerCustomer = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    const exists = await Customer.findOne({ firebaseUid });
+    const normalizedEmail = String(email).trim().toLowerCase();
+
+    const exists = await Customer.findOne({
+      $or: [{ firebaseUid }, { email: normalizedEmail }],
+    });
     if (exists) {
       return res.status(200).json({ message: "Customer already exists" });
     }
@@ -19,7 +23,7 @@ exports.registerCustomer = async (req, res) => {
     const customer = await Customer.create({
       firebaseUid,
       name,
-      email,
+      email: normalizedEmail,
     });
 
     res.status(201).json({

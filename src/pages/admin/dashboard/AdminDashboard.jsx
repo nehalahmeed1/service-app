@@ -16,7 +16,7 @@ const AdminDashboard = () => {
   const [range, setRange] = useState("7d");
 
   useEffect(() => {
-    fetchDashboardStats()
+    fetchDashboardStats({ range })
       .then((res) => setData(res.data))
       .catch(() => setData(null))
       .finally(() => setLoading(false));
@@ -44,18 +44,18 @@ const AdminDashboard = () => {
       <KpiGrid data={data} />
 
       {/* TRENDS */}
-      <TrendsChart />
+      <TrendsChart data={data} />
 
       {/* MID SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <OperationalStatus />
-        <TopCategories />
+        <OperationalStatus data={data} />
+        <TopCategories data={data} />
       </div>
 
       {/* BOTTOM SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AlertsPanel />
-        <RecentActivity />
+        <RecentActivity data={data} />
       </div>
     </div>
   );

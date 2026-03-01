@@ -29,17 +29,32 @@ exports.uploadIdentity = async (req, res) => {
       });
     }
 
+    const now = new Date();
+    const existingIdentity = provider.verification?.identity || {};
+
     const identityPayload = {
       status: "PENDING",
+      remarks: "",
+      verifiedBy: null,
+      verifiedAt: null,
       aadhaarNumber,
       documents: [
         `/uploads/identity/${req.files.aadhaarFront[0].filename}`,
         `/uploads/identity/${req.files.aadhaarBack[0].filename}`,
       ],
+      createdAt: existingIdentity.createdAt || now,
+      updatedAt: now,
+      submittedAt: now,
+      submittedBy: req.user.id,
+      lastAction: existingIdentity.createdAt ? "UPDATE" : "CREATE",
     };
 
     await Provider.findByIdAndUpdate(provider._id, {
       $set: {
+        status: "PENDING",
+        "approval.approvedBy": null,
+        "approval.approvedAt": null,
+        "approval.rejectionReason": null,
         "verification.identity": identityPayload,
       },
     });

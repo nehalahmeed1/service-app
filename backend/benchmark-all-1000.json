@@ -1,0 +1,139 @@
+{
+  "ranAt": "2026-02-28T09:53:46.575Z",
+  "options": {
+    "baseUrl": "http://localhost:5000",
+    "group": "all",
+    "iterations": 1000,
+    "concurrency": 1000,
+    "timeoutMs": 10000
+  },
+  "results": [
+    {
+      "endpoint": "GET /api/categories",
+      "summary": {
+        "requests": 1000,
+        "minMs": 2345.72,
+        "maxMs": 4067.91,
+        "avgMs": 3281.94,
+        "p50Ms": 3284.31,
+        "p95Ms": 4000.42,
+        "p99Ms": 4024.4,
+        "status": {
+          "200": 1000
+        }
+      }
+    },
+    {
+      "endpoint": "GET /api/sub-categories",
+      "summary": {
+        "requests": 1000,
+        "minMs": 542.84,
+        "maxMs": 4458.27,
+        "avgMs": 1513.42,
+        "p50Ms": 806.85,
+        "p95Ms": 3946.48,
+        "p99Ms": 4382.39,
+        "status": {
+          "200": 384,
+          "ERR": 616
+        }
+      }
+    },
+    {
+      "endpoint": "GET /api/admin/dashboard",
+      "summary": {
+        "requests": 1000,
+        "minMs": 2704.71,
+        "maxMs": 4747.19,
+        "avgMs": 3650.48,
+        "p50Ms": 3546.34,
+        "p95Ms": 4724.52,
+        "p99Ms": 4745.78,
+        "status": {
+          "401": 143,
+          "ERR": 857
+        }
+      }
+    },
+    {
+      "endpoint": "GET /api/admin/insights/providers",
+      "summary": {
+        "requests": 1000,
+        "minMs": 1382.29,
+        "maxMs": 4318.77,
+        "avgMs": 3346.8,
+        "p50Ms": 3324.76,
+        "p95Ms": 3618.26,
+        "p99Ms": 4250,
+        "status": {
+          "401": 207,
+          "ERR": 793
+        }
+      }
+    },
+    {
+      "endpoint": "GET /api/admin/approvals/providers",
+      "summary": {
+        "requests": 1000,
+        "minMs": 292.01,
+        "maxMs": 1895.75,
+        "avgMs": 1171.34,
+        "p50Ms": 1098.96,
+        "p95Ms": 1732.55,
+        "p99Ms": 1859.62,
+        "status": {
+          "401": 330,
+          "ERR": 670
+        }
+      }
+    },
+    {
+      "endpoint": "GET /api/provider/me",
+      "summary": {
+        "requests": 1000,
+        "minMs": 342.72,
+        "maxMs": 1413.4,
+        "avgMs": 802.21,
+        "p50Ms": 725.95,
+        "p95Ms": 1347.91,
+        "p99Ms": 1398.01,
+        "status": {
+          "401": 533,
+          "ERR": 467
+        }
+      }
+    },
+    {
+      "endpoint": "GET /api/provider/bookings/stats",
+      "summary": {
+        "requests": 1000,
+        "minMs": 462.1,
+        "maxMs": 1241.53,
+        "avgMs": 850.4,
+        "p50Ms": 798.86,
+        "p95Ms": 1179.1,
+        "p99Ms": 1225.38,
+        "status": {
+          "401": 486,
+          "ERR": 514
+        }
+      }
+    },
+    {
+      "endpoint": "GET /api/customer/bookings",
+      "summary": {
+        "requests": 1000,
+        "minMs": 333.16,
+        "maxMs": 930.82,
+        "avgMs": 635.8,
+        "p50Ms": 623.73,
+        "p95Ms": 855.31,
+        "p99Ms": 917.01,
+        "status": {
+          "401": 552,
+          "ERR": 448
+        }
+      }
+    }
+  ]
+}

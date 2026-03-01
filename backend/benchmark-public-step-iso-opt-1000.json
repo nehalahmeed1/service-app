@@ -1,0 +1,43 @@
+{
+  "ranAt": "2026-02-28T10:20:13.922Z",
+  "options": {
+    "baseUrl": "http://localhost:5000",
+    "group": "public",
+    "iterations": 1000,
+    "concurrency": 1000,
+    "timeoutMs": 10000
+  },
+  "results": [
+    {
+      "endpoint": "GET /api/categories",
+      "summary": {
+        "requests": 1000,
+        "minMs": 1655.9,
+        "maxMs": 3314.43,
+        "avgMs": 2149.88,
+        "p50Ms": 1908.62,
+        "p95Ms": 3218.95,
+        "p99Ms": 3289.62,
+        "status": {
+          "200": 1000
+        }
+      }
+    },
+    {
+      "endpoint": "GET /api/sub-categories",
+      "summary": {
+        "requests": 1000,
+        "minMs": 1275.35,
+        "maxMs": 2603.32,
+        "avgMs": 1648.08,
+        "p50Ms": 1410.92,
+        "p95Ms": 2509.63,
+        "p99Ms": 2583.19,
+        "status": {
+          "200": 384,
+          "ERR": 616
+        }
+      }
+    }
+  ]
+}

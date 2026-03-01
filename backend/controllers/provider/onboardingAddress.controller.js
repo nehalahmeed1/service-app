@@ -38,8 +38,14 @@ exports.uploadAddress = async (req, res) => {
       });
     }
 
+    const now = new Date();
+    const existingAddress = provider.verification?.address || {};
+
     const addressPayload = {
       status: "PENDING",
+      remarks: "",
+      verifiedBy: null,
+      verifiedAt: null,
       addressLine,
       city,
       state,
@@ -47,10 +53,19 @@ exports.uploadAddress = async (req, res) => {
       documents: [
         `/uploads/address/${req.file.filename}`,
       ],
+      createdAt: existingAddress.createdAt || now,
+      updatedAt: now,
+      submittedAt: now,
+      submittedBy: req.user.id,
+      lastAction: existingAddress.createdAt ? "UPDATE" : "CREATE",
     };
 
     await Provider.findByIdAndUpdate(provider._id, {
       $set: {
+        status: "PENDING",
+        "approval.approvedBy": null,
+        "approval.approvedAt": null,
+        "approval.rejectionReason": null,
         "verification.address": addressPayload,
       },
     });

@@ -1,13 +1,20 @@
-const mongoose = require("mongoose");
+﻿const mongoose = require("mongoose");
 
 const categorySchema = new mongoose.Schema(
   {
+    businessLevel: {
+      type: String,
+      enum: ["INDIVIDUAL", "SMALL_TEAM", "ENTERPRISE"],
+      required: true,
+      default: "INDIVIDUAL",
+      index: true,
+    },
+
     name: {
       type: String,
       required: true,
       trim: true,
-      unique: true,
-      index: true, // ✅ added for faster search
+      index: true,
     },
 
     slug: {
@@ -15,44 +22,52 @@ const categorySchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
-      immutable: true, // 🔒 slug can NEVER change
-      index: true, // ✅ added
+      immutable: true,
+      index: true,
     },
 
     status: {
       type: String,
       enum: ["active", "inactive"],
       default: "active",
-      index: true, // ✅ added for filtering
+      index: true,
     },
 
     parent: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
-      default: null, // used for nested categories (optional)
-      index: true, // ✅ added
+      default: null,
+      index: true,
     },
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
       required: true,
-      index: true, // ✅ added
+      index: true,
     },
 
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
-      index: true, // ✅ added
+      index: true,
     },
 
     deleted_at: {
       type: Date,
       default: null,
-      index: true, // ✅ added for soft delete
+      index: true,
     },
   },
   { timestamps: true }
 );
+
+categorySchema.index(
+  { name: 1, businessLevel: 1 },
+  { unique: true }
+);
+
+// Hot-path index for public categories listing.
+categorySchema.index({ status: 1, deleted_at: 1, name: 1 });
 
 module.exports = mongoose.model("Category", categorySchema);

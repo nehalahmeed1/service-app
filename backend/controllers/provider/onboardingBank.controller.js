@@ -29,16 +29,31 @@ exports.uploadBank = async (req, res) => {
         .json({ message: "Bank proof document is required" });
     }
 
+    const now = new Date();
+    const existingBank = provider.verification?.bank || {};
+
     const bankPayload = {
       status: "PENDING",
+      remarks: "",
+      verifiedBy: null,
+      verifiedAt: null,
       accountHolderName,
       accountNumber,
       ifscCode,
       documents: [`/uploads/bank/${req.file.filename}`],
+      createdAt: existingBank.createdAt || now,
+      updatedAt: now,
+      submittedAt: now,
+      submittedBy: req.user.id,
+      lastAction: existingBank.createdAt ? "UPDATE" : "CREATE",
     };
 
     await Provider.findByIdAndUpdate(provider._id, {
       $set: {
+        status: "PENDING",
+        "approval.approvedBy": null,
+        "approval.approvedAt": null,
+        "approval.rejectionReason": null,
         "verification.bank": bankPayload,
       },
     });

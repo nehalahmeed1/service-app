@@ -9,7 +9,6 @@ import {
 } from "recharts";
 import { TrendingUp } from "lucide-react";
 
-// Temporary mock data (replace with API later)
 const mockTrendData = [
   { label: "Mon", bookings: 12, revenue: 2400 },
   { label: "Tue", bookings: 18, revenue: 3600 },
@@ -20,7 +19,11 @@ const mockTrendData = [
   { label: "Sun", bookings: 15, revenue: 3000 },
 ];
 
-const TrendsChart = () => {
+const TrendsChart = ({ data }) => {
+  const trendData = Array.isArray(data?.trends) && data.trends.length
+    ? data.trends
+    : mockTrendData;
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       {/* Header */}
@@ -40,7 +43,7 @@ const TrendsChart = () => {
       {/* Chart */}
       <div className="h-[280px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={mockTrendData}>
+          <LineChart data={trendData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
             <XAxis
               dataKey="label"

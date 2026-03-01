@@ -7,6 +7,7 @@ export default function CreateCategory() {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
+  const [businessLevel, setBusinessLevel] = useState("INDIVIDUAL");
   const [status, setStatus] = useState("active");
 
   const [loading, setLoading] = useState(false);
@@ -40,7 +41,7 @@ export default function CreateCategory() {
 
     try {
       setLoading(true);
-      await createCategory({ name, status });
+      await createCategory({ name, status, businessLevel });
       setDirty(false);
       setSuccess("Category created successfully");
 
@@ -128,6 +129,24 @@ export default function CreateCategory() {
             <p className="text-xs text-gray-500 mt-1">
               Visible to users across the platform
             </p>
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">
+              Business Level
+            </label>
+            <select
+              className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-black bg-white"
+              value={businessLevel}
+              onChange={(e) => {
+                setDirty(true);
+                setBusinessLevel(e.target.value);
+              }}
+            >
+              <option value="INDIVIDUAL">Individual</option>
+              <option value="SMALL_TEAM">Small Team</option>
+              <option value="ENTERPRISE">Enterprise</option>
+            </select>
           </div>
 
           {/* SLUG */}
