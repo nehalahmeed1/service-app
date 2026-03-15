@@ -7,6 +7,35 @@ const notDeletedQuery = {
   $or: [{ deleted_at: null }, { deleted_at: { $exists: false } }],
 };
 
+const PRICING_MODE_SET = new Set(["STANDARD", "QUANTITY_BASED", "AREA_BASED"]);
+const PRICING_UNIT_SET = new Set(["UNIT", "SQFT"]);
+
+function parsePricingInput(body = {}) {
+  const pricingModel = String(body.pricingModel || "STANDARD")
+    .trim()
+    .toUpperCase();
+  const pricingUnitType = String(body.pricingUnitType || "UNIT")
+    .trim()
+    .toUpperCase();
+  const parsedRate = Number(body.pricingRate ?? 0);
+
+  if (!PRICING_MODE_SET.has(pricingModel)) {
+    return { error: "Invalid pricing model" };
+  }
+  if (!PRICING_UNIT_SET.has(pricingUnitType)) {
+    return { error: "Invalid pricing unit type" };
+  }
+  if (!Number.isFinite(parsedRate) || parsedRate < 0) {
+    return { error: "Pricing rate must be a non-negative number" };
+  }
+
+  return {
+    pricingModel,
+    pricingUnitType,
+    pricingRate: parsedRate,
+  };
+}
+
 const resolveBusinessLevel = async (categoryId) => {
   const category = await Category.findOne({
     _id: categoryId,
@@ -92,10 +121,19 @@ exports.getSubCategoryById = async (req, res) => {
 };
 
 exports.createSubCategory = async (req, res) => {
-  const { name, category_id } = req.body;
+  const { name, category_id, basePrice } = req.body;
+  const pricing = parsePricingInput(req.body);
 
   if (!name || !category_id) {
     return res.status(400).json({ message: "Name and category required" });
+  }
+  if (pricing.error) {
+    return res.status(400).json({ message: pricing.error });
+  }
+
+  const parsedBasePrice = Number(basePrice ?? 0);
+  if (!Number.isFinite(parsedBasePrice) || parsedBasePrice < 0) {
+    return res.status(400).json({ message: "Base price must be a valid non-negative number" });
   }
 
   const category = await Category.findOne({
@@ -115,6 +153,10 @@ exports.createSubCategory = async (req, res) => {
     category_id,
     businessLevel: category.businessLevel,
     status: "active",
+    basePrice: parsedBasePrice,
+    pricingModel: pricing.pricingModel,
+    pricingUnitType: pricing.pricingUnitType,
+    pricingRate: pricing.pricingRate,
     createdBy: req.admin._id,
     deleted_at: null,
   });
@@ -132,9 +174,33 @@ exports.updateSubCategory = async (req, res) => {
     return res.status(404).json({ message: "Sub-category not found" });
   }
 
-  const { name, status, category_id } = req.body;
+  const { name, status, category_id, basePrice } = req.body;
   if (name) subCategory.name = name;
   if (status) subCategory.status = status;
+  if (basePrice !== undefined) {
+    const parsedBasePrice = Number(basePrice);
+    if (!Number.isFinite(parsedBasePrice) || parsedBasePrice < 0) {
+      return res.status(400).json({ message: "Base price must be a valid non-negative number" });
+    }
+    subCategory.basePrice = parsedBasePrice;
+  }
+  if (
+    req.body.pricingModel !== undefined ||
+    req.body.pricingUnitType !== undefined ||
+    req.body.pricingRate !== undefined
+  ) {
+    const pricing = parsePricingInput({
+      pricingModel: req.body.pricingModel ?? subCategory.pricingModel,
+      pricingUnitType: req.body.pricingUnitType ?? subCategory.pricingUnitType,
+      pricingRate: req.body.pricingRate ?? subCategory.pricingRate,
+    });
+    if (pricing.error) {
+      return res.status(400).json({ message: pricing.error });
+    }
+    subCategory.pricingModel = pricing.pricingModel;
+    subCategory.pricingUnitType = pricing.pricingUnitType;
+    subCategory.pricingRate = pricing.pricingRate;
+  }
 
   if (category_id && String(subCategory.category_id) !== String(category_id)) {
     const category = await Category.findOne({
@@ -257,6 +323,10 @@ exports.bulkUploadSubCategories = async (req, res) => {
       category_id: parent._id,
       businessLevel: parent.businessLevel,
       status: "active",
+      basePrice: Number(row.base_price ?? row.price ?? 0) || 0,
+      pricingModel: "STANDARD",
+      pricingUnitType: "UNIT",
+      pricingRate: 0,
       createdBy: req.admin._id,
       deleted_at: null,
     });
@@ -265,4 +335,67 @@ exports.bulkUploadSubCategories = async (req, res) => {
   }
 
   res.json({ success: true, created, skipped });
+};
+
+exports.bulkUpdateSubCategoryPricing = async (req, res) => {
+  try {
+    const updates = Array.isArray(req.body?.updates) ? req.body.updates : [];
+
+    if (!updates.length) {
+      return res.status(400).json({ message: "At least one pricing update is required" });
+    }
+    if (updates.length > 500) {
+      return res.status(400).json({ message: "Maximum 500 records can be updated at once" });
+    }
+
+    const operations = [];
+    for (const item of updates) {
+      const id = String(item?.id || "").trim();
+      if (!id) continue;
+
+      const pricing = parsePricingInput(item);
+      if (pricing.error) {
+        return res.status(400).json({ message: `${pricing.error} for id ${id}` });
+      }
+
+      const set = {
+        pricingModel: pricing.pricingModel,
+        pricingUnitType: pricing.pricingUnitType,
+        pricingRate: pricing.pricingRate,
+        updatedBy: req.admin?._id,
+      };
+
+      if (item.basePrice !== undefined) {
+        const parsedBasePrice = Number(item.basePrice);
+        if (!Number.isFinite(parsedBasePrice) || parsedBasePrice < 0) {
+          return res.status(400).json({ message: `Invalid basePrice for id ${id}` });
+        }
+        set.basePrice = parsedBasePrice;
+      }
+
+      operations.push({
+        updateOne: {
+          filter: { _id: id, ...notDeletedQuery },
+          update: { $set: set },
+        },
+      });
+    }
+
+    if (!operations.length) {
+      return res.status(400).json({ message: "No valid update records found" });
+    }
+
+    const result = await SubCategory.bulkWrite(operations, { ordered: false });
+
+    return res.json({
+      success: true,
+      data: {
+        matchedCount: result.matchedCount || 0,
+        modifiedCount: result.modifiedCount || 0,
+      },
+    });
+  } catch (error) {
+    console.error("Bulk update sub-category pricing error:", error);
+    return res.status(500).json({ message: "Failed to bulk update pricing" });
+  }
 };

@@ -15,6 +15,7 @@ const ALERT_TABS = new Set([
   "MATCHED_NOT_STARTED",
   "STARTED_NOT_COMPLETED",
 ]);
+const BOOKING_ALERT_SEEN_KEY = "admin_booking_alert_seen_counts_v1";
 
 const STATUS_OPTIONS = [
   "ALL",
@@ -98,6 +99,31 @@ function slaClass(state) {
   return "bg-slate-100 text-slate-700 border-slate-200";
 }
 
+function businessLevelLabel(level) {
+  if (level === "ENTERPRISE") return "Enterprise";
+  if (level === "SMALL_TEAM") return "Small Team";
+  return "Individual";
+}
+
+function readSeenCounts() {
+  try {
+    const raw = localStorage.getItem(BOOKING_ALERT_SEEN_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+}
+
+function writeSeenCounts(next) {
+  try {
+    localStorage.setItem(BOOKING_ALERT_SEEN_KEY, JSON.stringify(next));
+  } catch (error) {
+    // Ignore storage failures and continue with in-memory UI state.
+  }
+}
+
 export default function AdminBookings() {
   const [tab, setTab] = useState("UPCOMING");
   const [status, setStatus] = useState("ALL");
@@ -111,6 +137,7 @@ export default function AdminBookings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [summary, setSummary] = useState({});
+  const [seenCounts, setSeenCounts] = useState(() => readSeenCounts());
   const [slaSummary, setSlaSummary] = useState({ breached: 0, warning: 0, onTrack: 0 });
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(1);
@@ -185,13 +212,31 @@ export default function AdminBookings() {
     return undefined;
   }, [selectedBookingId]);
 
+  const markCurrentTabAsSeen = () => {
+    if (!ALERT_TABS.has(tab)) return;
+    const currentCount = Number(summary[tab] || 0);
+    setSeenCounts((prev) => {
+      const next = { ...prev, [tab]: currentCount };
+      writeSeenCounts(next);
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    markCurrentTabAsSeen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, summary]);
+
   const headerTabs = useMemo(
     () =>
       TABS.map((item) => ({
         ...item,
         count: Number(summary[item.key] || 0),
+        unread: ALERT_TABS.has(item.key)
+          ? Math.max(0, Number(summary[item.key] || 0) - Number(seenCounts[item.key] || 0))
+          : 0,
       })),
-    [summary]
+    [summary, seenCounts]
   );
 
   return (
@@ -214,9 +259,9 @@ export default function AdminBookings() {
               }`}
             >
               {item.label}
-              {ALERT_TABS.has(item.key) && item.count > 0 ? (
+              {ALERT_TABS.has(item.key) && item.unread > 0 ? (
                 <span className="ml-2 inline-flex rounded-full bg-rose-500 px-2 py-0.5 text-xs text-white">
-                  {item.count}
+                  {item.unread}
                 </span>
               ) : null}
             </button>
@@ -316,6 +361,7 @@ export default function AdminBookings() {
                 <tr>
                   <th className="px-3 py-2 text-left">Order ID</th>
                   <th className="px-3 py-2 text-left">Booking Type</th>
+                  <th className="px-3 py-2 text-left">Mode</th>
                   <th className="px-3 py-2 text-left">Scheduled Time</th>
                   <th className="px-3 py-2 text-left">Customer Details</th>
                   <th className="px-3 py-2 text-left">Address</th>
@@ -335,6 +381,11 @@ export default function AdminBookings() {
                     </td>
                     <td className="px-3 py-3">
                       <span className="rounded bg-slate-100 px-2 py-1 text-xs">{row.bookingType}</span>
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className="rounded bg-violet-100 px-2 py-1 text-xs text-violet-700">
+                        {businessLevelLabel(row.businessLevel)}
+                      </span>
                     </td>
                     <td className="px-3 py-3">
                       <p>{row.scheduledDate || "-"}</p>
@@ -430,8 +481,10 @@ export default function AdminBookings() {
                     <p className="mt-2 text-sm">Ref: {details.bookingRef}</p>
                     <p className="text-sm">Type: {details.type}</p>
                     <p className="text-sm">Status: {details.status}</p>
+                    <p className="text-sm">Mode: {businessLevelLabel(details.bookingContext?.businessLevel)}</p>
                     <p className="text-sm">Service: {details.serviceName || "-"}</p>
                     <p className="text-sm">Price: Rs {details.price || 0}</p>
+                    <p className="text-sm">Payment Status: {details.paymentStatus || "UNPAID"}</p>
                   </article>
 
                   <article className="rounded-lg border p-4">
@@ -440,6 +493,44 @@ export default function AdminBookings() {
                     <p className="text-xs text-slate-600">{details.worker?.phone || ""}</p>
                     <p className="text-xs text-slate-600">{details.worker?.email || ""}</p>
                   </article>
+                </section>
+
+                <section className="rounded-lg border p-4">
+                  <h3 className="font-semibold">Payment & Settlement</h3>
+                  <div className="mt-2 grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+                    <p>
+                      <strong>Customer Paid:</strong>{" "}
+                      {details.financials?.currency || "INR"}{" "}
+                      {Number(details.financials?.customerPaidAmount || 0).toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>Provider Payable:</strong>{" "}
+                      {details.financials?.currency || "INR"}{" "}
+                      {Number(details.financials?.providerPayable || 0).toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>Platform Retained:</strong>{" "}
+                      {details.financials?.currency || "INR"}{" "}
+                      {Number(details.financials?.retainedByPlatform || 0).toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>Total Amount:</strong>{" "}
+                      {details.financials?.currency || "INR"}{" "}
+                      {Number(details.financials?.totalAmount || details.price || 0).toLocaleString()}
+                    </p>
+                    <p>
+                      <strong>Payment Reference:</strong> {details.payment?.customerReference || details.paymentReference || "-"}
+                    </p>
+                    <p>
+                      <strong>Verification:</strong> {details.payment?.verificationStatus || "NOT_SUBMITTED"}
+                    </p>
+                    <p>
+                      <strong>Paid At:</strong> {formatDateTime(details.payment?.customerPaidAt || details.paidAt)}
+                    </p>
+                    <p>
+                      <strong>Verified At:</strong> {formatDateTime(details.payment?.verifiedAt)}
+                    </p>
+                  </div>
                 </section>
 
                 <section className="rounded-lg border p-4">
@@ -459,6 +550,46 @@ export default function AdminBookings() {
                   <h3 className="font-semibold">Address</h3>
                   <p className="mt-2 text-sm">{details.address || "-"}</p>
                 </section>
+
+                {details.bookingContext ? (
+                  <section className="rounded-lg border p-4">
+                    <h3 className="font-semibold">Operational Context</h3>
+                    <div className="mt-2 grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
+                      <p>
+                        <strong>Mode:</strong> {businessLevelLabel(details.bookingContext.businessLevel)}
+                      </p>
+                      <p>
+                        <strong>Landmark:</strong> {details.bookingContext.landmark || "-"}
+                      </p>
+                      <p className="md:col-span-2">
+                        <strong>Instructions:</strong> {details.bookingContext.specialInstructions || "-"}
+                      </p>
+                    </div>
+
+                    {details.bookingContext.businessLevel === "SMALL_TEAM" ? (
+                      <div className="mt-3 rounded border border-amber-200 bg-amber-50 p-3 text-sm">
+                        <p><strong>Team Name:</strong> {details.bookingContext.smallTeam?.teamName || "-"}</p>
+                        <p><strong>Coordinator:</strong> {details.bookingContext.smallTeam?.coordinator || "-"}</p>
+                        <p><strong>Req/Month:</strong> {details.bookingContext.smallTeam?.requestsPerMonth || 0}</p>
+                        <p><strong>Preferred Window:</strong> {details.bookingContext.smallTeam?.preferredWindow || "-"}</p>
+                      </div>
+                    ) : null}
+
+                    {details.bookingContext.businessLevel === "ENTERPRISE" ? (
+                      <div className="mt-3 rounded border border-violet-200 bg-violet-50 p-3 text-sm">
+                        <p><strong>Company:</strong> {details.bookingContext.enterprise?.companyName || "-"}</p>
+                        <p><strong>Facility Type:</strong> {details.bookingContext.enterprise?.facilityType || "-"}</p>
+                        <p><strong>Facility Count:</strong> {details.bookingContext.enterprise?.facilityCount || 0}</p>
+                        <p><strong>Coordinator:</strong> {details.bookingContext.enterprise?.coordinator || "-"}</p>
+                        <p><strong>PO Number:</strong> {details.bookingContext.enterprise?.poNumber || "-"}</p>
+                        <p>
+                          <strong>Compliance Checklist:</strong>{" "}
+                          {details.bookingContext.enterprise?.complianceChecklistRequired ? "Required" : "Not Required"}
+                        </p>
+                      </div>
+                    ) : null}
+                  </section>
+                ) : null}
               </div>
             ) : null}
           </div>

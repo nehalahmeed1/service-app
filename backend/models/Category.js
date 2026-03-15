@@ -33,6 +33,24 @@ const categorySchema = new mongoose.Schema(
       index: true,
     },
 
+    pricingModel: {
+      type: String,
+      enum: ["STANDARD", "QUANTITY_BASED", "AREA_BASED"],
+      default: "STANDARD",
+    },
+
+    pricingUnitType: {
+      type: String,
+      enum: ["UNIT", "SQFT"],
+      default: "UNIT",
+    },
+
+    pricingRate: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
     parent: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",

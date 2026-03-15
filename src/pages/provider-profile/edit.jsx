@@ -25,7 +25,7 @@ export default function EditProviderProfile() {
     name: "",
     phone: "",
     serviceCategoryId: "",
-    serviceSubCategoryId: "",
+    serviceSubCategoryIds: [],
     location: "",
     bio: "",
     yearsExperience: 0,
@@ -59,7 +59,11 @@ export default function EditProviderProfile() {
           name: p?.name || "",
           phone: p?.phone || "",
           serviceCategoryId: categoryId,
-          serviceSubCategoryId: p?.serviceSubCategoryId || "",
+          serviceSubCategoryIds: Array.isArray(p?.serviceSubCategoryIds)
+            ? p.serviceSubCategoryIds
+            : p?.serviceSubCategoryId
+            ? [p.serviceSubCategoryId]
+            : [],
           location: p?.location || "",
           bio: p?.bio || "",
           yearsExperience: p?.yearsExperience || 0,
@@ -110,7 +114,10 @@ export default function EditProviderProfile() {
       formData.append("name", form.name);
       formData.append("phone", form.phone);
       formData.append("serviceCategoryId", form.serviceCategoryId || "");
-      formData.append("serviceSubCategoryId", form.serviceSubCategoryId || "");
+      formData.append(
+        "serviceSubCategoryIds",
+        JSON.stringify(form.serviceSubCategoryIds || [])
+      );
       formData.append("location", form.location);
       formData.append("bio", form.bio);
       formData.append("yearsExperience", String(form.yearsExperience || 0));
@@ -200,7 +207,7 @@ export default function EditProviderProfile() {
                 setForm((p) => ({
                   ...p,
                   serviceCategoryId: value,
-                  serviceSubCategoryId: "",
+                  serviceSubCategoryIds: [],
                 }))
               }
               options={categories.map((cat) => ({
@@ -210,19 +217,17 @@ export default function EditProviderProfile() {
               placeholder="Select category"
             />
 
-            <SelectField
-              label="Sub-category"
-              value={form.serviceSubCategoryId}
-              onChange={(value) =>
-                setForm((p) => ({ ...p, serviceSubCategoryId: value }))
+            <MultiSelectSubCategoryField
+              label="Sub-categories"
+              values={form.serviceSubCategoryIds}
+              onChange={(values) =>
+                setForm((p) => ({ ...p, serviceSubCategoryIds: values }))
               }
               options={subCategories.map((sub) => ({
                 value: sub._id,
                 label: sub.name,
               }))}
-              placeholder={
-                loadingSubCategories ? "Loading sub-categories..." : "Select sub-category"
-              }
+              loading={loadingSubCategories}
               disabled={!form.serviceCategoryId || loadingSubCategories}
             />
 
@@ -311,6 +316,58 @@ function SelectField({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+function MultiSelectSubCategoryField({
+  label,
+  values,
+  onChange,
+  options,
+  loading,
+  disabled = false,
+}) {
+  const selectedValues = Array.isArray(values) ? values : [];
+
+  const toggle = (value) => {
+    if (selectedValues.includes(value)) {
+      onChange(selectedValues.filter((item) => item !== value));
+      return;
+    }
+    onChange([...selectedValues, value]);
+  };
+
+  return (
+    <div>
+      <label className="text-sm font-medium">{label}</label>
+      <div className="mt-1 border rounded-md px-3 py-2 bg-white min-h-10">
+        {loading ? (
+          <p className="text-sm text-gray-500">Loading sub-categories...</p>
+        ) : disabled ? (
+          <p className="text-sm text-gray-500">Select category first</p>
+        ) : options.length === 0 ? (
+          <p className="text-sm text-gray-500">No sub-categories available</p>
+        ) : (
+          <div className="space-y-2 max-h-40 overflow-y-auto">
+            {options.map((item) => (
+              <label key={item.value} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={selectedValues.includes(item.value)}
+                  onChange={() => toggle(item.value)}
+                />
+                <span>{item.label}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+      {!loading && !disabled && selectedValues.length > 0 && (
+        <p className="text-xs text-muted-foreground mt-1">
+          {selectedValues.length} selected
+        </p>
+      )}
     </div>
   );
 }

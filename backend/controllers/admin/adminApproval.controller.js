@@ -4,10 +4,17 @@ const Admin = require("../../models/Admin");
 
 const SECTION_KEYS = ["profile", "identity", "address", "work", "bank"];
 
+function areAllSectionsVerified(provider) {
+  if (!provider?.verification) return false;
+  return SECTION_KEYS.every(
+    (sectionKey) => provider.verification?.[sectionKey]?.status === "VERIFIED"
+  );
+}
+
 async function syncProviderStatusFromSectionState() {
-  const pendingSectionQuery = {
+  const unverifiedSectionQuery = {
     $or: SECTION_KEYS.map((sectionKey) => ({
-      [`verification.${sectionKey}.status`]: "PENDING",
+      [`verification.${sectionKey}.status`]: { $in: ["PENDING", "REJECTED"] },
     })),
   };
 
@@ -15,7 +22,7 @@ async function syncProviderStatusFromSectionState() {
     {
       deletedAt: null,
       status: { $in: ["REJECTED", "APPROVED"] },
-      ...pendingSectionQuery,
+      ...unverifiedSectionQuery,
     },
     {
       $set: {
@@ -26,6 +33,13 @@ async function syncProviderStatusFromSectionState() {
       },
     }
   );
+}
+
+async function findProviderByIdOrFirebaseUid(id) {
+  return Provider.findOne({
+    deletedAt: null,
+    $or: [{ _id: id }, { firebaseUid: id }],
+  });
 }
 
 function hasSectionData(section = {}) {
@@ -140,10 +154,16 @@ exports.getProviderById = async (req, res) => {
  */
 exports.approveProvider = async (req, res) => {
   try {
-    const provider = await Provider.findById(req.params.id);
+    const provider = await findProviderByIdOrFirebaseUid(req.params.id);
 
     if (!provider) {
       return res.status(404).json({ message: "Provider not found" });
+    }
+
+    if (!areAllSectionsVerified(provider)) {
+      return res.status(400).json({
+        message: "All verification sections must be VERIFIED before approval",
+      });
     }
 
     provider.status = "APPROVED";
@@ -185,9 +205,9 @@ exports.approveProvider = async (req, res) => {
  */
 exports.rejectProvider = async (req, res) => {
   try {
-    const { reason } = req.body;
+    const reason = String(req.body?.reason || "").trim();
 
-    const provider = await Provider.findById(req.params.id);
+    const provider = await findProviderByIdOrFirebaseUid(req.params.id);
     if (!provider) {
       return res.status(404).json({ message: "Provider not found" });
     }
@@ -256,7 +276,7 @@ exports.verifySection = async (req, res) => {
         .json({ message: "Remarks are required for rejection" });
     }
 
-    const provider = await Provider.findById(req.params.id);
+    const provider = await findProviderByIdOrFirebaseUid(req.params.id);
     if (!provider) {
       return res.status(404).json({ message: "Provider not found" });
     }
@@ -308,6 +328,9 @@ exports.verifySection = async (req, res) => {
 exports.getApprovalNotifications = async (req, res) => {
   try {
     await syncProviderStatusFromSectionState();
+    const readAt = req.admin?.approvalNotificationsReadAt
+      ? new Date(req.admin.approvalNotificationsReadAt)
+      : null;
 
     const providers = await Provider.find({
       deletedAt: null,
@@ -343,17 +366,53 @@ exports.getApprovalNotifications = async (req, res) => {
     notifications.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+    const unreadCount = readAt
+      ? notifications.filter(
+          (item) => new Date(item.createdAt).getTime() > readAt.getTime()
+        ).length
+      : notifications.length;
 
     return res.json({
       success: true,
       data: {
-        unreadCount: notifications.length,
+        unreadCount,
+        readAt,
         notifications: notifications.slice(0, 20),
       },
     });
   } catch (error) {
     console.error("Get approval notifications error:", error);
     return res.status(500).json({ message: "Failed to load notifications" });
+  }
+};
+
+/**
+ * =========================================================
+ * MARK APPROVAL NOTIFICATIONS AS READ
+ * POST /api/admin/approvals/notifications/read
+ * =========================================================
+ */
+exports.markApprovalNotificationsRead = async (req, res) => {
+  try {
+    if (!req.admin?._id) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const now = new Date();
+    await Admin.updateOne(
+      { _id: req.admin._id },
+      { $set: { approvalNotificationsReadAt: now } }
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        readAt: now,
+      },
+    });
+  } catch (error) {
+    console.error("Mark approval notifications read error:", error);
+    return res.status(500).json({ message: "Failed to update notification status" });
   }
 };
 

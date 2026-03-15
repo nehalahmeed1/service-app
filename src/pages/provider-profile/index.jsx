@@ -15,10 +15,19 @@ function profileStatusClass(status) {
 
 function getPrimaryServiceLabel(profile) {
   const category = profile?.serviceCategoryName;
-  const subCategory = profile?.serviceSubCategoryName;
-  if (category && subCategory) return `${category} / ${subCategory}`;
+  const subCategoryNames = Array.isArray(profile?.serviceSubCategoryNames)
+    ? profile.serviceSubCategoryNames
+    : profile?.serviceSubCategoryName
+    ? [profile.serviceSubCategoryName]
+    : [];
+
+  if (subCategoryNames.length > 0) {
+    return category
+      ? `${category} / ${subCategoryNames.join(", ")}`
+      : subCategoryNames.join(", ");
+  }
+
   if (category) return category;
-  if (subCategory) return subCategory;
   return profile?.service || "-";
 }
 

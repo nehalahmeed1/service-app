@@ -1,6 +1,7 @@
-﻿const Provider = require("../../models/Provider");
+const Provider = require("../../models/Provider");
 const AdminAuditLog = require("../../models/AdminAuditLog");
 const Booking = require("../../models/Booking");
+const SupportRequest = require("../../models/SupportRequest");
 
 const SECTION_KEYS = ["profile", "identity", "address", "work", "bank"];
 
@@ -144,9 +145,71 @@ exports.getPaymentsOverview = async (req, res) => {
     const cacheKey = `payments:${normalizeQuery({ search, eligibility })}`;
 
     const { data, cache } = await getOrBuildCached(cacheKey, async () => {
-      const providers = await Provider.find({ deletedAt: null }).lean();
+      const [providers, bookingRows] = await Promise.all([
+        Provider.find({ deletedAt: null }).lean(),
+        Booking.find({})
+          .select(
+            "providerId status paymentStatus price priceBreakdown payment paidAt updatedAt"
+          )
+          .lean(),
+      ]);
+
+      const byProvider = new Map();
+      bookingRows.forEach((booking) => {
+        if (!booking.providerId) return;
+        const key = String(booking.providerId);
+        const fin = computeFinancials(booking);
+        const current = byProvider.get(key) || {
+          grossCustomerPaid: 0,
+          providerPayable: 0,
+          platformRetained: 0,
+          pendingCollection: 0,
+          paidOrders: 0,
+          pendingVerificationOrders: 0,
+          lastPaymentUpdateAt: null,
+        };
+
+        current.grossCustomerPaid += fin.customerPaidAmount;
+        current.platformRetained += fin.retainedByPlatform;
+        if (fin.payoutReady) {
+          current.providerPayable += fin.providerPayable;
+          current.paidOrders += 1;
+        }
+        if (
+          ["PROOF_UPLOADED", "COMPLETED"].includes(booking.status) &&
+          booking.paymentStatus === "PAYMENT_PENDING"
+        ) {
+          current.pendingVerificationOrders += 1;
+        }
+        if (
+          ["PROOF_UPLOADED", "COMPLETED"].includes(booking.status) &&
+          ["UNPAID", "PAYMENT_PENDING"].includes(booking.paymentStatus)
+        ) {
+          current.pendingCollection += fin.totalAmount;
+        }
+
+        const candidateDate = booking.paidAt || booking.updatedAt || null;
+        if (
+          candidateDate &&
+          (!current.lastPaymentUpdateAt ||
+            new Date(candidateDate).getTime() >
+              new Date(current.lastPaymentUpdateAt).getTime())
+        ) {
+          current.lastPaymentUpdateAt = candidateDate;
+        }
+        byProvider.set(key, current);
+      });
 
       let rows = providers.map((provider) => {
+        const financials = byProvider.get(String(provider._id)) || {
+          grossCustomerPaid: 0,
+          providerPayable: 0,
+          platformRetained: 0,
+          pendingCollection: 0,
+          paidOrders: 0,
+          pendingVerificationOrders: 0,
+          lastPaymentUpdateAt: null,
+        };
         const bankStatus = provider.verification?.bank?.status || "PENDING";
         const identityStatus = provider.verification?.identity?.status || "PENDING";
         const addressStatus = provider.verification?.address?.status || "PENDING";
@@ -173,9 +236,14 @@ exports.getPaymentsOverview = async (req, res) => {
           bankStatus,
           eligibility: eligible ? "ELIGIBLE" : "ON_HOLD",
           holdReason: holdReasons.join(", "),
-          payoutAmount: 0,
+          payoutAmount: Number(financials.providerPayable.toFixed(2)),
+          grossCustomerPaid: Number(financials.grossCustomerPaid.toFixed(2)),
+          platformRetained: Number(financials.platformRetained.toFixed(2)),
+          pendingCollection: Number(financials.pendingCollection.toFixed(2)),
+          paidOrders: financials.paidOrders,
+          pendingVerificationOrders: financials.pendingVerificationOrders,
           currency: "INR",
-          lastUpdatedAt: provider.updatedAt,
+          lastUpdatedAt: financials.lastPaymentUpdateAt || provider.updatedAt,
         };
       });
 
@@ -199,6 +267,26 @@ exports.getPaymentsOverview = async (req, res) => {
         eligible: rows.filter((row) => row.eligibility === "ELIGIBLE").length,
         onHold: rows.filter((row) => row.eligibility === "ON_HOLD").length,
         bankVerified: rows.filter((row) => row.bankStatus === "VERIFIED").length,
+        totalCustomerPaid: Number(
+          rows
+            .reduce((sum, row) => sum + Number(row.grossCustomerPaid || 0), 0)
+            .toFixed(2)
+        ),
+        totalProviderPayable: Number(
+          rows
+            .reduce((sum, row) => sum + Number(row.payoutAmount || 0), 0)
+            .toFixed(2)
+        ),
+        totalPlatformRetained: Number(
+          rows
+            .reduce((sum, row) => sum + Number(row.platformRetained || 0), 0)
+            .toFixed(2)
+        ),
+        totalPendingCollection: Number(
+          rows
+            .reduce((sum, row) => sum + Number(row.pendingCollection || 0), 0)
+            .toFixed(2)
+        ),
       };
 
       return { summary, rows };
@@ -553,6 +641,39 @@ function hasReachedStatus(currentStatus = "", allowed = []) {
   return allowed.includes(currentStatus);
 }
 
+function computeFinancials(booking = {}) {
+  const basePrice = Number(booking?.priceBreakdown?.basePrice || 0);
+  const platformFee = Number(booking?.priceBreakdown?.platformFee || 0);
+  const tax = Number(booking?.priceBreakdown?.tax || 0);
+  const total = Number(booking?.priceBreakdown?.total || booking?.price || 0);
+  const currency = booking?.priceBreakdown?.currency || booking?.payment?.currency || "INR";
+  const retainedByPlatform = Math.max(0, platformFee + tax);
+  const providerPayable = Math.max(0, total - retainedByPlatform);
+  const paymentStatus = booking?.paymentStatus || "UNPAID";
+  const customerPaidAmount =
+    paymentStatus === "PAID"
+      ? Number(booking?.payment?.requestedAmount || total)
+      : paymentStatus === "PAYMENT_PENDING"
+      ? Number(booking?.payment?.requestedAmount || 0)
+      : 0;
+
+  const payoutReady =
+    ["PROOF_UPLOADED", "COMPLETED"].includes(booking?.status) &&
+    paymentStatus === "PAID";
+
+  return {
+    currency,
+    basePrice,
+    platformFee,
+    tax,
+    totalAmount: total,
+    customerPaidAmount,
+    providerPayable,
+    retainedByPlatform,
+    payoutReady,
+  };
+}
+
 exports.getBookingsFlow = async (req, res) => {
   try {
     const {
@@ -623,6 +744,7 @@ exports.getBookingsFlow = async (req, res) => {
       id: row._id,
       orderId: row.packageCode || String(row._id).slice(-8),
       bookingType: row.status,
+      businessLevel: row.bookingContext?.businessLevel || "INDIVIDUAL",
       scheduledDate: row.bookingDate,
       scheduledTime: row.timeSlot,
       createdAt: row.createdAt,
@@ -721,6 +843,7 @@ exports.getBookingFlowDetails = async (req, res) => {
       (hasReachedStatus(booking.status, ["COMPLETED", "CANCELLED", "REJECTED"])
         ? booking.updatedAt
         : null);
+    const financials = computeFinancials(booking);
 
     return res.json({
       success: true,
@@ -732,7 +855,41 @@ exports.getBookingFlowDetails = async (req, res) => {
         scheduledDate: booking.bookingDate,
         scheduledTime: booking.timeSlot,
         price: booking.price || 0,
+        paymentStatus: booking.paymentStatus || "UNPAID",
+        paidAt: booking.paidAt || null,
+        paymentReference: booking.paymentReference || "",
+        payment: {
+          method: booking.payment?.method || "",
+          requestedAmount: Number(booking.payment?.requestedAmount || 0),
+          currency: booking.payment?.currency || booking?.priceBreakdown?.currency || "INR",
+          customerReference: booking.payment?.customerReference || "",
+          customerPaidAt: booking.payment?.customerPaidAt || null,
+          submittedAt: booking.payment?.submittedAt || null,
+          verificationStatus: booking.payment?.verificationStatus || "NOT_SUBMITTED",
+          verificationNote: booking.payment?.verificationNote || "",
+          verifiedAt: booking.payment?.verifiedAt || null,
+        },
+        financials,
         address: booking.address || "-",
+        bookingContext: booking.bookingContext || {
+          businessLevel: "INDIVIDUAL",
+          landmark: "",
+          specialInstructions: "",
+          smallTeam: {
+            teamName: "",
+            coordinator: "",
+            requestsPerMonth: 0,
+            preferredWindow: "",
+          },
+          enterprise: {
+            companyName: "",
+            facilityType: "",
+            facilityCount: 0,
+            coordinator: "",
+            poNumber: "",
+            complianceChecklistRequired: false,
+          },
+        },
         categoryName: booking.categoryId?.name || "",
         subCategoryName: booking.subCategoryId?.name || "",
         serviceName: booking.subCategoryId?.name || booking.packageCode || "",
@@ -763,3 +920,324 @@ exports.getBookingFlowDetails = async (req, res) => {
     return res.status(500).json({ message: "Failed to load booking details" });
   }
 };
+
+exports.markBookingPaid = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const paymentReference = String(req.body?.paymentReference || "").trim();
+    const verificationNote = String(req.body?.verificationNote || "").trim();
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    if (!["COMPLETED", "PROOF_UPLOADED"].includes(booking.status)) {
+      return res.status(400).json({
+        message: `Payment can be marked only for completed bookings. Current status: ${booking.status}`,
+      });
+    }
+
+    booking.paymentStatus = "PAID";
+    booking.paidAt = new Date();
+    booking.paymentReference = paymentReference || booking.paymentReference || "";
+    booking.payment = {
+      ...booking.payment,
+      method: booking.payment?.method || "UPI",
+      requestedAmount: Number(booking.payment?.requestedAmount || booking?.priceBreakdown?.total || booking.price || 0),
+      currency: booking.payment?.currency || booking?.priceBreakdown?.currency || "INR",
+      customerReference: booking.payment?.customerReference || booking.paymentReference || "",
+      customerPaidAt: booking.payment?.customerPaidAt || booking.paidAt,
+      submittedAt: booking.payment?.submittedAt || booking.paidAt,
+      verificationStatus: "VERIFIED",
+      verificationNote: verificationNote || booking.payment?.verificationNote || "",
+      verifiedBy: req.admin?._id || null,
+      verifiedAt: booking.paidAt,
+    };
+    booking.statusHistory.push({
+      status: "PAID",
+      note: paymentReference ? `Payment marked by admin (${paymentReference})` : "Payment marked by admin",
+    });
+    await booking.save();
+
+    return res.json({
+      success: true,
+      data: {
+        id: booking._id,
+        paymentStatus: booking.paymentStatus,
+        paidAt: booking.paidAt,
+        paymentReference: booking.paymentReference,
+      },
+    });
+  } catch (error) {
+    console.error("Mark booking paid error:", error);
+    return res.status(500).json({ message: "Failed to mark payment" });
+  }
+};
+
+exports.resolveBookingDispute = async (req, res) => {
+  try {
+    const { bookingId, disputeId } = req.params;
+    const resolutionType = String(req.body?.resolutionType || "").trim();
+    const resolutionNote = String(req.body?.resolutionNote || "").trim();
+
+    const allowedTypes = ["FULL_REFUND", "PARTIAL_REFUND", "RETRY_SERVICE", "REJECTED"];
+    if (!allowedTypes.includes(resolutionType)) {
+      return res.status(400).json({ message: "Invalid resolution type" });
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    const dispute = (booking.disputes || []).find((item) => String(item._id) === String(disputeId));
+    if (!dispute) {
+      return res.status(404).json({ message: "Dispute not found" });
+    }
+
+    if (!["OPEN", "UNDER_REVIEW"].includes(dispute.status)) {
+      return res.status(400).json({ message: `Dispute already ${dispute.status}` });
+    }
+
+    dispute.status = resolutionType === "REJECTED" ? "REJECTED" : "RESOLVED";
+    dispute.resolutionType = resolutionType;
+    dispute.resolutionNote = resolutionNote;
+    dispute.resolvedAt = new Date();
+    dispute.resolvedBy = req.admin?._id || null;
+
+    if (resolutionType === "FULL_REFUND") {
+      booking.paymentStatus = "REFUNDED";
+    } else if (resolutionType === "PARTIAL_REFUND") {
+      booking.paymentStatus = "PARTIALLY_REFUNDED";
+    }
+
+    booking.statusHistory.push({
+      status: "DISPUTE_RESOLVED",
+      note: `${resolutionType}${resolutionNote ? `: ${resolutionNote}` : ""}`,
+    });
+
+    await booking.save();
+
+    return res.json({
+      success: true,
+      data: {
+        id: booking._id,
+        paymentStatus: booking.paymentStatus,
+        disputes: booking.disputes,
+      },
+    });
+  } catch (error) {
+    console.error("Resolve booking dispute error:", error);
+    return res.status(500).json({ message: "Failed to resolve dispute" });
+  }
+};
+
+exports.getEscalationDashboard = async (req, res) => {
+  try {
+    const now = Date.now();
+    const [stuckRows, activeRows, disputedRows, unpaidCompletedRows] = await Promise.all([
+      Booking.find({
+        status: "BOOKED",
+        providerId: null,
+        createdAt: { $lte: new Date(now - 15 * 60 * 1000) },
+      })
+        .populate("subCategoryId", "name")
+        .sort({ createdAt: 1 })
+        .limit(50)
+        .lean(),
+      Booking.find({
+        status: { $in: ["BOOKED", "PROVIDER_ASSIGNED", "ACCEPTED", "ARRIVING", "IN_PROGRESS", "SERVICE_DONE", "PROOF_UPLOADED"] },
+      })
+        .populate("subCategoryId", "name")
+        .sort({ createdAt: -1 })
+        .limit(200)
+        .lean(),
+      Booking.find({
+        "disputes.0": { $exists: true },
+      })
+        .populate("subCategoryId", "name")
+        .sort({ updatedAt: -1 })
+        .limit(100)
+        .lean(),
+      Booking.find({
+        status: "COMPLETED",
+        paymentStatus: { $ne: "PAID" },
+      })
+        .populate("subCategoryId", "name")
+        .sort({ updatedAt: -1 })
+        .limit(100)
+        .lean(),
+    ]);
+
+    const breached = activeRows
+      .map((row) => ({
+        id: row._id,
+        serviceName: row.subCategoryId?.name || row.packageCode || "-",
+        status: row.status,
+        sla: computeBookingSla(row),
+        createdAt: row.createdAt,
+      }))
+      .filter((row) => row.sla?.state === "BREACHED")
+      .slice(0, 50);
+
+    const openDisputes = disputedRows
+      .map((row) => ({
+        id: row._id,
+        serviceName: row.subCategoryId?.name || row.packageCode || "-",
+        disputes: (row.disputes || []).filter((d) => ["OPEN", "UNDER_REVIEW"].includes(d.status)),
+        updatedAt: row.updatedAt,
+      }))
+      .filter((row) => row.disputes.length > 0)
+      .slice(0, 50);
+
+    return res.json({
+      success: true,
+      data: {
+        summary: {
+          stuckUnassigned: stuckRows.length,
+          slaBreached: breached.length,
+          openDisputes: openDisputes.length,
+          unpaidCompleted: unpaidCompletedRows.length,
+        },
+        stuckUnassigned: stuckRows.map((row) => ({
+          id: row._id,
+          serviceName: row.subCategoryId?.name || row.packageCode || "-",
+          bookingDate: row.bookingDate,
+          timeSlot: row.timeSlot,
+          createdAt: row.createdAt,
+        })),
+        slaBreached: breached,
+        openDisputes,
+        unpaidCompleted: unpaidCompletedRows.map((row) => ({
+          id: row._id,
+          serviceName: row.subCategoryId?.name || row.packageCode || "-",
+          amount: row.price || 0,
+          paymentStatus: row.paymentStatus || "UNPAID",
+          completedAt: row.updatedAt,
+        })),
+      },
+    });
+  } catch (error) {
+    console.error("Get escalation dashboard error:", error);
+    return res.status(500).json({ message: "Failed to load escalation dashboard" });
+  }
+};
+
+exports.getSupportRequests = async (req, res) => {
+  try {
+    const {
+      type = "ALL",
+      status = "ALL",
+      priority = "ALL",
+      search = "",
+      page = 1,
+      limit = 20,
+    } = req.query;
+
+    const query = {};
+    if (type !== "ALL") query.type = type;
+    if (status !== "ALL") query.status = status;
+    if (priority !== "ALL") query.priority = priority;
+
+    if (search) {
+      const rgx = new RegExp(escapeRegex(search), "i");
+      query.$or = [{ name: rgx }, { email: rgx }, { subject: rgx }, { message: rgx }];
+    }
+
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(10, Number(limit) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [total, rows] = await Promise.all([
+      SupportRequest.countDocuments(query),
+      SupportRequest.find(query)
+        .populate("bookingId", "packageCode bookingDate timeSlot")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+    ]);
+
+    return res.json({
+      success: true,
+      data: {
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / limitNum)),
+        },
+        rows: rows.map((row) => ({
+          id: row._id,
+          type: row.type,
+          status: row.status,
+          priority: row.priority,
+          name: row.name,
+          email: row.email,
+          phone: row.phone || "",
+          city: row.city || "",
+          subject: row.subject,
+          message: row.message,
+          source: row.source || "WEB",
+          booking: row.bookingId
+            ? {
+                id: row.bookingId._id,
+                packageCode: row.bookingId.packageCode || "",
+                bookingDate: row.bookingId.bookingDate || "",
+                timeSlot: row.bookingId.timeSlot || "",
+              }
+            : null,
+          resolutionNote: row.resolutionNote || "",
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+        })),
+      },
+    });
+  } catch (error) {
+    console.error("Get support requests error:", error);
+    return res.status(500).json({ message: "Failed to load support requests" });
+  }
+};
+
+exports.updateSupportRequestStatus = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const status = String(req.body?.status || "").trim().toUpperCase();
+    const resolutionNote = String(req.body?.resolutionNote || "").trim();
+
+    const allowed = ["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: "Invalid support request status" });
+    }
+
+    const doc = await SupportRequest.findById(requestId);
+    if (!doc) {
+      return res.status(404).json({ message: "Support request not found" });
+    }
+
+    doc.status = status;
+    if (resolutionNote) doc.resolutionNote = resolutionNote;
+
+    if (["RESOLVED", "CLOSED"].includes(status)) {
+      doc.resolvedAt = new Date();
+      doc.resolvedBy = req.admin?._id || null;
+    }
+
+    await doc.save();
+
+    return res.json({
+      success: true,
+      data: {
+        id: doc._id,
+        status: doc.status,
+        resolutionNote: doc.resolutionNote || "",
+        resolvedAt: doc.resolvedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Update support request status error:", error);
+    return res.status(500).json({ message: "Failed to update support request" });
+  }
+};
+

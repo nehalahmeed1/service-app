@@ -23,6 +23,11 @@ router.get(
   adminAuthMiddleware,
   adminApprovalController.getApprovalNotifications
 );
+router.post(
+  "/notifications/read",
+  adminAuthMiddleware,
+  adminApprovalController.markApprovalNotificationsRead
+);
 
 // Get single provider details
 router.get(

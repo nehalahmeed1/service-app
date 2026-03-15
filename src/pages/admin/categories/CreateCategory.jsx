@@ -9,6 +9,9 @@ export default function CreateCategory() {
   const [name, setName] = useState("");
   const [businessLevel, setBusinessLevel] = useState("INDIVIDUAL");
   const [status, setStatus] = useState("active");
+  const [pricingModel, setPricingModel] = useState("STANDARD");
+  const [pricingUnitType, setPricingUnitType] = useState("UNIT");
+  const [pricingRate, setPricingRate] = useState("0");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -41,7 +44,14 @@ export default function CreateCategory() {
 
     try {
       setLoading(true);
-      await createCategory({ name, status, businessLevel });
+      await createCategory({
+        name,
+        status,
+        businessLevel,
+        pricingModel,
+        pricingUnitType,
+        pricingRate: Number(pricingRate || 0),
+      });
       setDirty(false);
       setSuccess("Category created successfully");
 
@@ -147,6 +157,51 @@ export default function CreateCategory() {
               <option value="SMALL_TEAM">Small Team</option>
               <option value="ENTERPRISE">Enterprise</option>
             </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block font-medium mb-1">Pricing Model</label>
+              <select
+                className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-black bg-white"
+                value={pricingModel}
+                onChange={(e) => {
+                  setDirty(true);
+                  setPricingModel(e.target.value);
+                }}
+              >
+                <option value="STANDARD">Standard</option>
+                <option value="QUANTITY_BASED">Quantity Based</option>
+                <option value="AREA_BASED">Area Based</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Pricing Unit</label>
+              <select
+                className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-black bg-white"
+                value={pricingUnitType}
+                onChange={(e) => {
+                  setDirty(true);
+                  setPricingUnitType(e.target.value);
+                }}
+              >
+                <option value="UNIT">Unit</option>
+                <option value="SQFT">Sq Ft</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Default Rate (Rs)</label>
+              <input
+                type="number"
+                min="0"
+                className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-black"
+                value={pricingRate}
+                onChange={(e) => {
+                  setDirty(true);
+                  setPricingRate(e.target.value);
+                }}
+              />
+            </div>
           </div>
 
           {/* SLUG */}

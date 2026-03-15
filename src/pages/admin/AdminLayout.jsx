@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
 import { Outlet, Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { fetchApprovalNotifications } from "@/services/approvalService";
+import {
+  fetchApprovalNotifications,
+  markApprovalNotificationsRead,
+} from "@/services/approvalService";
 import Icon from "@/components/AppIcon";
+import BackNavigation from "@/components/navigation/BackNavigation";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const role = localStorage.getItem("admin_role");
   const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [openNotifications, setOpenNotifications] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -36,6 +41,7 @@ export default function AdminLayout() {
       try {
         const data = await fetchApprovalNotifications();
         setNotifications(data?.notifications || []);
+        setUnreadCount(Number(data?.unreadCount || 0));
       } catch (error) {
         console.error("Failed to load admin notifications", error);
       }
@@ -45,6 +51,21 @@ export default function AdminLayout() {
     const timer = setInterval(loadNotifications, 30000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!openNotifications) return;
+
+    const markAsRead = async () => {
+      try {
+        await markApprovalNotificationsRead();
+        setUnreadCount(0);
+      } catch (error) {
+        console.error("Failed to mark notifications as read", error);
+      }
+    };
+
+    markAsRead();
+  }, [openNotifications]);
 
   const navContent = (
     <nav className="flex-1 p-4 space-y-2">
@@ -92,6 +113,14 @@ export default function AdminLayout() {
 
       <Link className="block hover:bg-gray-800 p-2 rounded" to="audit-logs" onClick={() => setMobileNavOpen(false)}>
         {t("audit_logs")}
+      </Link>
+
+      <Link className="block hover:bg-gray-800 p-2 rounded" to="support-requests" onClick={() => setMobileNavOpen(false)}>
+        Support Requests
+      </Link>
+
+      <Link className="block hover:bg-gray-800 p-2 rounded" to="escalations" onClick={() => setMobileNavOpen(false)}>
+        Escalations
       </Link>
 
       {role === "SUPER_ADMIN" && (
@@ -142,9 +171,9 @@ export default function AdminLayout() {
               aria-label={t("notifications")}
             >
               <Icon name="Bell" size={18} />
-              {notifications.length > 0 ? (
+              {unreadCount > 0 ? (
                 <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
-                  {notifications.length > 99 ? "99+" : notifications.length}
+                  {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               ) : null}
             </button>
@@ -198,6 +227,7 @@ export default function AdminLayout() {
         ) : null}
 
         <div className="p-3 sm:p-6">
+          <BackNavigation className="mb-4" />
           <Outlet />
         </div>
       </main>

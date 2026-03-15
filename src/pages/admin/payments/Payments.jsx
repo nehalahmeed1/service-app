@@ -53,6 +53,22 @@ export default function Payments() {
       { label: t("payout_eligible"), value: summary.eligible || 0 },
       { label: t("on_hold"), value: summary.onHold || 0 },
       { label: t("bank_verified"), value: summary.bankVerified || 0 },
+      {
+        label: "Customer Paid Total",
+        value: `INR ${Number(summary.totalCustomerPaid || 0).toLocaleString()}`,
+      },
+      {
+        label: "Provider Payable Total",
+        value: `INR ${Number(summary.totalProviderPayable || 0).toLocaleString()}`,
+      },
+      {
+        label: "Platform Retained Total",
+        value: `INR ${Number(summary.totalPlatformRetained || 0).toLocaleString()}`,
+      },
+      {
+        label: "Pending Collection Total",
+        value: `INR ${Number(summary.totalPendingCollection || 0).toLocaleString()}`,
+      },
     ],
     [summary, t]
   );
@@ -124,7 +140,12 @@ export default function Payments() {
                   <th className="px-3 py-2 text-left">{t("eligibility")}</th>
                   <th className="px-3 py-2 text-left">{t("bank_status")}</th>
                   <th className="px-3 py-2 text-left">{t("provider_status")}</th>
-                  <th className="px-3 py-2 text-left">{t("amount")}</th>
+                  <th className="px-3 py-2 text-left">Customer Paid</th>
+                  <th className="px-3 py-2 text-left">Provider Payable</th>
+                  <th className="px-3 py-2 text-left">Platform Retained</th>
+                  <th className="px-3 py-2 text-left">Pending Collection</th>
+                  <th className="px-3 py-2 text-left">Paid Orders</th>
+                  <th className="px-3 py-2 text-left">Pending Verification</th>
                   <th className="px-3 py-2 text-left">{t("hold_reason")}</th>
                   <th className="px-3 py-2 text-left">{t("updated")}</th>
                 </tr>
@@ -148,8 +169,19 @@ export default function Payments() {
                     </td>
                     <td className="px-3 py-3">{row.providerStatus}</td>
                     <td className="px-3 py-3 font-semibold">
-                      {row.currency} {row.payoutAmount}
+                      {row.currency} {Number(row.grossCustomerPaid || 0).toLocaleString()}
                     </td>
+                    <td className="px-3 py-3 font-semibold">
+                      {row.currency} {Number(row.payoutAmount || 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3 font-semibold">
+                      {row.currency} {Number(row.platformRetained || 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3 font-semibold">
+                      {row.currency} {Number(row.pendingCollection || 0).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3">{Number(row.paidOrders || 0)}</td>
+                    <td className="px-3 py-3">{Number(row.pendingVerificationOrders || 0)}</td>
                     <td className="px-3 py-3 text-xs text-slate-600 max-w-xs">
                       {row.holdReason || "-"}
                     </td>

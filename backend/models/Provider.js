@@ -87,6 +87,16 @@ const ProviderSchema = new mongoose.Schema(
       index: true,
     },
 
+    serviceSubCategoryIds: {
+      type: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "SubCategory",
+        },
+      ],
+      default: [],
+    },
+
     location: {
       type: String,
       default: "",

@@ -49,3 +49,10 @@ export const bulkUploadSubCategories = async (formData) => {
   );
   return res.data;
 };
+
+export const bulkUpdateSubCategoryPricing = async (updates) => {
+  const res = await api.post("/admin/sub-categories/bulk-pricing", {
+    updates,
+  });
+  return res.data;
+};

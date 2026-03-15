@@ -5,6 +5,7 @@ import {
   toggleSubCategoryStatus,
   deleteSubCategory,
   bulkUploadSubCategories,
+  bulkUpdateSubCategoryPricing,
 } from "../../../services/subCategoryService";
 
 export default function SubCategories() {
@@ -17,6 +18,10 @@ export default function SubCategories() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkPricingModel, setBulkPricingModel] = useState("STANDARD");
+  const [bulkPricingUnitType, setBulkPricingUnitType] = useState("UNIT");
+  const [bulkPricingRate, setBulkPricingRate] = useState("");
 
   /* ================= LOAD DATA ================= */
   const loadData = async () => {
@@ -30,6 +35,9 @@ export default function SubCategories() {
         limit: 50,
       });
       setList(res?.data || []);
+      setSelectedIds((prev) =>
+        prev.filter((id) => (res?.data || []).some((item) => item._id === id))
+      );
     } catch {
       setError("Failed to load sub-categories");
     } finally {
@@ -74,6 +82,48 @@ export default function SubCategories() {
     if (!window.confirm("Delete this sub-category?")) return;
     await deleteSubCategory(id);
     loadData();
+  };
+
+  const toggleSelectOne = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (!list.length) return;
+    const allIds = list.map((item) => item._id);
+    const allSelected = allIds.every((id) => selectedIds.includes(id));
+    setSelectedIds(allSelected ? [] : allIds);
+  };
+
+  const handleApplyBulkPricing = async () => {
+    if (!selectedIds.length) {
+      alert("Select at least one sub-category");
+      return;
+    }
+
+    const parsedRate = Number(bulkPricingRate || 0);
+    if (!Number.isFinite(parsedRate) || parsedRate < 0) {
+      alert("Rate must be a non-negative number");
+      return;
+    }
+
+    try {
+      await bulkUpdateSubCategoryPricing(
+        selectedIds.map((id) => ({
+          id,
+          pricingModel: bulkPricingModel,
+          pricingUnitType: bulkPricingUnitType,
+          pricingRate: parsedRate,
+        }))
+      );
+      alert("Pricing updated for selected sub-categories");
+      setSelectedIds([]);
+      await loadData();
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to apply bulk pricing");
+    }
   };
 
   return (
@@ -138,14 +188,68 @@ export default function SubCategories() {
         </select>
       </div>
 
+      <div className="mb-4 bg-white border rounded p-3 flex flex-wrap gap-3 items-end">
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">Pricing Model</label>
+          <select
+            className="border px-3 py-2 rounded bg-white"
+            value={bulkPricingModel}
+            onChange={(e) => setBulkPricingModel(e.target.value)}
+          >
+            <option value="STANDARD">Standard</option>
+            <option value="QUANTITY_BASED">Quantity Based</option>
+            <option value="AREA_BASED">Area Based</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">Pricing Unit</label>
+          <select
+            className="border px-3 py-2 rounded bg-white"
+            value={bulkPricingUnitType}
+            onChange={(e) => setBulkPricingUnitType(e.target.value)}
+          >
+            <option value="UNIT">Unit</option>
+            <option value="SQFT">Sq Ft</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs text-gray-600 mb-1">Rate (Rs)</label>
+          <input
+            type="number"
+            min="0"
+            className="border px-3 py-2 rounded w-36"
+            placeholder="e.g. 150"
+            value={bulkPricingRate}
+            onChange={(e) => setBulkPricingRate(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={handleApplyBulkPricing}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Apply to Selected ({selectedIds.length})
+        </button>
+      </div>
+
       {/* ================= TABLE ================= */}
       <div className="bg-white border rounded overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-gray-100">
             <tr>
+              <th className="px-4 py-3 text-center">
+                <input
+                  type="checkbox"
+                  checked={list.length > 0 && list.every((item) => selectedIds.includes(item._id))}
+                  onChange={toggleSelectAll}
+                />
+              </th>
               <th className="px-4 py-3 text-left">Name</th>
               <th className="px-4 py-3 text-left">Category</th>
               <th className="px-4 py-3 text-left">Business Level</th>
+              <th className="px-4 py-3 text-left">Pricing Model</th>
+              <th className="px-4 py-3 text-left">Pricing Unit</th>
+              <th className="px-4 py-3 text-left">Rate (Rs)</th>
+              <th className="px-4 py-3 text-left">Base Price (Rs)</th>
               <th className="px-4 py-3 text-left">Created</th>
               <th className="px-4 py-3 text-left">Updated</th>
               <th className="px-4 py-3 text-center">Status</th>
@@ -156,12 +260,31 @@ export default function SubCategories() {
           <tbody>
             {list.map((item) => (
               <tr key={item._id} className="border-t">
+                <td className="px-4 py-3 text-center">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(item._id)}
+                    onChange={() => toggleSelectOne(item._id)}
+                  />
+                </td>
                 <td className="px-4 py-3 font-medium">{item.name}</td>
                 <td className="px-4 py-3">
                   {item.category_id?.name}
                 </td>
                 <td className="px-4 py-3">
                   {item.businessLevel || item.category_id?.businessLevel}
+                </td>
+                <td className="px-4 py-3">
+                  {item.pricingModel || "STANDARD"}
+                </td>
+                <td className="px-4 py-3">
+                  {item.pricingUnitType || "UNIT"}
+                </td>
+                <td className="px-4 py-3">
+                  {Number(item.pricingRate || 0).toLocaleString()}
+                </td>
+                <td className="px-4 py-3">
+                  {Number(item.basePrice || 0).toLocaleString()}
                 </td>
                 <td className="px-4 py-3">
                   {new Date(item.createdAt).toLocaleString()}

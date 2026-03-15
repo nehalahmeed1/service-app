@@ -40,7 +40,7 @@ async function fetchSubCategories(categoryId) {
 
   return SubCategory.find(query)
     .populate("category_id", "_id name slug")
-    .select("_id name slug category_id")
+    .select("_id name slug category_id basePrice pricingModel pricingUnitType pricingRate")
     .sort({ name: 1 })
     .lean();
 }

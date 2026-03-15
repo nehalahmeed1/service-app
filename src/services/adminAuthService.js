@@ -27,12 +27,6 @@ export const loginAdmin = async (payload) => {
     `${API_BASE_URL}/admin/auth/login`,
     payload
   );
-
-  // store admin token
-  if (response.data?.token) {
-    localStorage.setItem("admin_token", response.data.token);
-  }
-
   return response.data;
 };
 

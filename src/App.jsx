@@ -28,6 +28,8 @@ import Payments from "./pages/admin/payments/Payments";
 import AuditLogs from "./pages/admin/audit-logs/AuditLogs";
 import CompletedJobsEvidence from "./pages/admin/completed-jobs/CompletedJobsEvidence";
 import AdminBookings from "./pages/admin/bookings/AdminBookings";
+import SupportRequests from "./pages/admin/support-requests/SupportRequests";
+import Escalations from "./pages/admin/escalations/Escalations";
 
 /* ================= REGISTER ================= */
 import CustomerRegister from "./pages/register/customer";
@@ -42,6 +44,16 @@ import ServiceCategoryPage from "./pages/customer-services/ServiceCategoryPage";
 import ServiceBookingPage from "./pages/customer-services/ServiceBookingPage";
 import ServiceSubCategoryDetailsPage from "./pages/customer-services/ServiceSubCategoryDetailsPage";
 import CustomerBookingsPage from "./pages/customer-bookings";
+import ContactUsPage from "./pages/support/ContactUsPage";
+import ComplaintPage from "./pages/support/ComplaintPage";
+import ReviewsAndRatings from "./pages/reviews-and-ratings";
+import AboutUsPage from "./pages/info/AboutUsPage";
+import ProfessionalsPage from "./pages/info/ProfessionalsPage";
+import TermsOfUsePage from "./pages/info/TermsOfUsePage";
+import PrivacyPolicyPage from "./pages/info/PrivacyPolicyPage";
+import RefundPolicyPage from "./pages/info/RefundPolicyPage";
+import CareerPage from "./pages/info/CareerPage";
+import StoriesPage from "./pages/info/StoriesPage";
 
 /* ================= PROVIDER ================= */
 import ProviderDashboard from "./pages/provider-dashboard";
@@ -111,6 +123,8 @@ export default function App() {
           <Route path="completed-jobs" element={<CompletedJobsEvidence />} />
           <Route path="payments" element={<Payments />} />
           <Route path="audit-logs" element={<AuditLogs />} />
+          <Route path="support-requests" element={<SupportRequests />} />
+          <Route path="escalations" element={<Escalations />} />
           <Route path="reports" element={<Reports />} />
         </Route>
       </Route>
@@ -178,6 +192,18 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route path="/contact-us" element={<ContactUsPage />} />
+        <Route path="/complaints" element={<ComplaintPage />} />
+        <Route path="/reviews" element={<ReviewsAndRatings />} />
+        <Route path="/reviews-and-ratings" element={<ReviewsAndRatings />} />
+        <Route path="/about-us" element={<AboutUsPage />} />
+        <Route path="/professionals" element={<ProfessionalsPage />} />
+        <Route path="/terms-of-use" element={<TermsOfUsePage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/refund-policy" element={<RefundPolicyPage />} />
+        <Route path="/career" element={<CareerPage />} />
+        <Route path="/stories" element={<StoriesPage />} />
       </Route>
 
       {/* ================= PROVIDER DASHBOARD ================= */}

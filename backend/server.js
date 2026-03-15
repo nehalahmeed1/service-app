@@ -24,7 +24,10 @@ app.use(express.urlencoded({ extended: true }));
 // CORS
 app.use(
   cors({
-    origin: "http://localhost:4028",
+    origin: (process.env.CORS_ORIGIN || "http://localhost:4028")
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean),
     credentials: true,
   })
 );
@@ -64,6 +67,8 @@ const customerBookingRoutes = require("./routes/customer/booking.routes");
 // PUBLIC
 const publicCategoryRoutes = require("./routes/categories.public.routes");
 const publicSubCategoryRoutes = require("./routes/subCategories.public.routes");
+const publicMarketplaceRoutes = require("./routes/publicMarketplace.routes");
+const publicSupportRoutes = require("./routes/publicSupport.routes");
 
 // =======================
 // ROUTES REGISTRATION
@@ -77,6 +82,8 @@ app.use("/api/customer/bookings", customerBookingRoutes);
 // PUBLIC ROUTES
 app.use("/api/categories", publicCategoryRoutes);
 app.use("/api/sub-categories", publicSubCategoryRoutes);
+app.use("/api/public/marketplace", publicMarketplaceRoutes);
+app.use("/api/public/support-requests", publicSupportRoutes);
 
 // AUTH
 app.use("/api/auth", authRoutes);

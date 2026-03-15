@@ -15,6 +15,10 @@ export default function EditSubCategory() {
   const [status, setStatus] = useState("inactive");
   const [categoryName, setCategoryName] = useState("");
   const [businessLevel, setBusinessLevel] = useState("");
+  const [basePrice, setBasePrice] = useState("");
+  const [pricingModel, setPricingModel] = useState("STANDARD");
+  const [pricingUnitType, setPricingUnitType] = useState("UNIT");
+  const [pricingRate, setPricingRate] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -45,6 +49,10 @@ export default function EditSubCategory() {
       setBusinessLevel(
         sub.businessLevel || sub.category_id?.businessLevel || ""
       );
+      setBasePrice(String(sub.basePrice ?? ""));
+      setPricingModel(sub.pricingModel || "STANDARD");
+      setPricingUnitType(sub.pricingUnitType || "UNIT");
+      setPricingRate(String(sub.pricingRate ?? ""));
     } catch (err) {
       console.error("Load sub-category failed:", err);
       setError("Failed to load sub-category");
@@ -57,7 +65,23 @@ export default function EditSubCategory() {
     e.preventDefault();
 
     try {
-      await updateSubCategory(id, { name });
+      const parsedBasePrice = Number(basePrice || 0);
+      if (!Number.isFinite(parsedBasePrice) || parsedBasePrice < 0) {
+        setError("Base price must be a non-negative number");
+        return;
+      }
+      const parsedPricingRate = Number(pricingRate || 0);
+      if (!Number.isFinite(parsedPricingRate) || parsedPricingRate < 0) {
+        setError("Pricing rate must be a non-negative number");
+        return;
+      }
+      await updateSubCategory(id, {
+        name,
+        basePrice: parsedBasePrice,
+        pricingModel,
+        pricingUnitType,
+        pricingRate: parsedPricingRate,
+      });
       navigate("/admin/sub-categories");
     } catch {
       setError("Update failed");
@@ -121,6 +145,55 @@ export default function EditSubCategory() {
             value={businessLevel}
             disabled
           />
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Base Price (Rs)</label>
+          <input
+            type="number"
+            min="0"
+            className="w-full border p-2 rounded"
+            value={basePrice}
+            onChange={(e) => setBasePrice(e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className="block font-medium mb-1">Pricing Model</label>
+            <select
+              className="w-full border p-2 rounded bg-white"
+              value={pricingModel}
+              onChange={(e) => setPricingModel(e.target.value)}
+            >
+              <option value="STANDARD">Standard</option>
+              <option value="QUANTITY_BASED">Quantity Based</option>
+              <option value="AREA_BASED">Area Based</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">Pricing Unit</label>
+            <select
+              className="w-full border p-2 rounded bg-white"
+              value={pricingUnitType}
+              onChange={(e) => setPricingUnitType(e.target.value)}
+            >
+              <option value="UNIT">Unit</option>
+              <option value="SQFT">Sq Ft</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">Rate (Rs)</label>
+            <input
+              type="number"
+              min="0"
+              className="w-full border p-2 rounded"
+              value={pricingRate}
+              onChange={(e) => setPricingRate(e.target.value)}
+            />
+          </div>
         </div>
 
         <div className="flex items-center justify-between">

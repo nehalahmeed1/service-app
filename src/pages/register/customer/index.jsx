@@ -9,14 +9,13 @@ import { doc, setDoc } from "firebase/firestore";
 import axios from "axios";
 
 import { auth, db } from "@/firebase";
-import { useLanguage } from "@/context/LanguageContext";
 import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function CustomerRegister() {
   const navigate = useNavigate();
-  const { language, setLanguage } = useLanguage();
   const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
@@ -50,7 +49,6 @@ export default function CustomerRegister() {
       );
       const uid = userCredential.user.uid;
 
-      // Optional Firestore sync. Registration should continue even if rules block this.
       try {
         await setDoc(doc(db, "users", uid), {
           name: form.name,
@@ -88,25 +86,8 @@ export default function CustomerRegister() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
-        <div style={{ textAlign: "right", marginBottom: 10 }}>
-          <button
-            onClick={() => setLanguage("en")}
-            style={language === "en" ? styles.langActive : styles.langBtn}
-          >
-            English
-          </button>
-          <button
-            onClick={() => setLanguage("hi")}
-            style={language === "hi" ? styles.langActive : styles.langBtn}
-          >
-            हिंदी
-          </button>
-          <button
-            onClick={() => setLanguage("te")}
-            style={language === "te" ? styles.langActive : styles.langBtn}
-          >
-            తెలుగు
-          </button>
+        <div style={styles.langRow}>
+          <LanguageSwitcher />
         </div>
 
         <h2 style={styles.title}>
@@ -147,7 +128,7 @@ export default function CustomerRegister() {
             onClick={() => setShowPassword((p) => !p)}
             style={styles.eye}
           >
-            {showPassword ? "🙈" : "👁️"}
+            {showPassword ? t("hide") : t("show")}
           </button>
         </div>
 
@@ -191,6 +172,11 @@ const styles = {
     borderRadius: 10,
     boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
   },
+  langRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginBottom: 10,
+  },
   title: {
     marginBottom: 16,
     fontSize: 18,
@@ -214,7 +200,7 @@ const styles = {
   passwordInput: {
     width: "100%",
     height: 44,
-    padding: "0 44px 0 12px",
+    padding: "0 58px 0 12px",
     borderRadius: 6,
     border: "1px solid #cbd5e1",
     fontSize: 14,
@@ -225,14 +211,15 @@ const styles = {
     top: 0,
     right: 0,
     height: "100%",
-    width: 44,
+    width: 56,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     background: "transparent",
     border: "none",
     cursor: "pointer",
-    fontSize: 16,
+    fontSize: 12,
+    color: "#475569",
   },
   btn: {
     width: "100%",
@@ -249,20 +236,6 @@ const styles = {
     background: "none",
     border: "none",
     color: "#2563eb",
-    cursor: "pointer",
-  },
-  langBtn: {
-    marginLeft: 6,
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-  },
-  langActive: {
-    marginLeft: 6,
-    fontWeight: "bold",
-    textDecoration: "underline",
-    background: "none",
-    border: "none",
     cursor: "pointer",
   },
 };

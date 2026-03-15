@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   signInWithEmailAndPassword,
@@ -7,9 +6,10 @@ import {
   setPersistence,
   browserSessionPersistence,
 } from "firebase/auth";
-import { auth } from "@/firebase";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
+import { auth } from "@/firebase";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const ACTIVE_ROLE_KEY = "active_role";
@@ -24,7 +24,6 @@ async function postWithRetry(url, payload, options = {}) {
   const retryStatuses = options.retryStatuses ?? [403, 404, 429, 500, 502, 503, 504];
 
   let lastError;
-
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
       return await axios.post(url, payload);
@@ -71,7 +70,6 @@ export default function Login() {
       setLoading(true);
       await setPersistence(auth, browserSessionPersistence);
 
-      // 🔥 STEP 1: Firebase Auth
       const cred = await signInWithEmailAndPassword(auth, email, password);
       const firebaseToken = await cred.user.getIdToken();
 
@@ -120,14 +118,12 @@ export default function Login() {
         return;
       }
 
-      // ❌ No account found
       alert(t("user_not_found_register_first"));
       await auth.signOut();
-
     } catch (error) {
       console.error("Login error:", error);
       if (error?.code === "auth/invalid-credential") {
-        alert("Invalid email or password. Please try again or reset password.");
+        alert(t("invalid_email_or_password"));
         return;
       }
       alert(error?.response?.data?.message || t("login_failed"));
@@ -153,6 +149,9 @@ export default function Login() {
   return (
     <div style={styles.page}>
       <div style={styles.card}>
+        <div style={styles.langRow}>
+          <LanguageSwitcher />
+        </div>
         <h2 style={styles.title}>{t("login")}</h2>
 
         <input
@@ -176,7 +175,7 @@ export default function Login() {
             onClick={() => setShowPassword((p) => !p)}
             style={styles.eye}
           >
-            👁️
+            {showPassword ? t("hide") : t("show")}
           </button>
         </div>
 
@@ -228,6 +227,11 @@ const styles = {
     boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
   },
   title: { textAlign: "center", marginBottom: 16, fontSize: 20 },
+  langRow: {
+    display: "flex",
+    justifyContent: "flex-end",
+    marginBottom: 10,
+  },
   input: {
     width: "100%",
     height: INPUT_HEIGHT,
@@ -240,7 +244,7 @@ const styles = {
   passwordInput: {
     width: "100%",
     height: INPUT_HEIGHT,
-    padding: "0 44px 0 12px",
+    padding: "0 58px 0 12px",
     border: "1px solid #ccc",
     borderRadius: 4,
   },
@@ -252,6 +256,8 @@ const styles = {
     background: "none",
     border: "none",
     cursor: "pointer",
+    fontSize: 12,
+    color: "#475569",
   },
   forgotBtn: {
     background: "none",

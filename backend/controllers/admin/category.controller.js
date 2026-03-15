@@ -5,6 +5,35 @@ const notDeletedQuery = {
   $or: [{ deleted_at: null }, { deleted_at: { $exists: false } }],
 };
 
+const PRICING_MODE_SET = new Set(["STANDARD", "QUANTITY_BASED", "AREA_BASED"]);
+const PRICING_UNIT_SET = new Set(["UNIT", "SQFT"]);
+
+function parsePricingInput(body = {}) {
+  const pricingModel = String(body.pricingModel || "STANDARD")
+    .trim()
+    .toUpperCase();
+  const pricingUnitType = String(body.pricingUnitType || "UNIT")
+    .trim()
+    .toUpperCase();
+  const parsedRate = Number(body.pricingRate ?? 0);
+
+  if (!PRICING_MODE_SET.has(pricingModel)) {
+    return { error: "Invalid pricing model" };
+  }
+  if (!PRICING_UNIT_SET.has(pricingUnitType)) {
+    return { error: "Invalid pricing unit type" };
+  }
+  if (!Number.isFinite(parsedRate) || parsedRate < 0) {
+    return { error: "Pricing rate must be a non-negative number" };
+  }
+
+  return {
+    pricingModel,
+    pricingUnitType,
+    pricingRate: parsedRate,
+  };
+}
+
 const generateUniqueSlug = async (name) => {
   const baseSlug = slugify(name, {
     lower: true,
@@ -99,6 +128,10 @@ exports.getCategoryById = async (req, res) => {
 exports.createCategory = async (req, res) => {
   try {
     const { name, status, businessLevel } = req.body;
+    const pricing = parsePricingInput(req.body);
+    if (pricing.error) {
+      return res.status(400).json({ message: pricing.error });
+    }
 
     if (!name || !businessLevel) {
       return res.status(400).json({
@@ -125,6 +158,9 @@ exports.createCategory = async (req, res) => {
       slug,
       status: status || "active",
       businessLevel,
+      pricingModel: pricing.pricingModel,
+      pricingUnitType: pricing.pricingUnitType,
+      pricingRate: pricing.pricingRate,
       createdBy: req.admin._id,
       deleted_at: null,
     });
@@ -150,6 +186,23 @@ exports.updateCategory = async (req, res) => {
     if (req.body.name) category.name = req.body.name;
     if (req.body.status) category.status = req.body.status;
     if (req.body.businessLevel) category.businessLevel = req.body.businessLevel;
+    if (
+      req.body.pricingModel !== undefined ||
+      req.body.pricingUnitType !== undefined ||
+      req.body.pricingRate !== undefined
+    ) {
+      const pricing = parsePricingInput({
+        pricingModel: req.body.pricingModel ?? category.pricingModel,
+        pricingUnitType: req.body.pricingUnitType ?? category.pricingUnitType,
+        pricingRate: req.body.pricingRate ?? category.pricingRate,
+      });
+      if (pricing.error) {
+        return res.status(400).json({ message: pricing.error });
+      }
+      category.pricingModel = pricing.pricingModel;
+      category.pricingUnitType = pricing.pricingUnitType;
+      category.pricingRate = pricing.pricingRate;
+    }
     if (!category.businessLevel) category.businessLevel = "INDIVIDUAL";
 
     category.updatedBy = req.admin._id;

@@ -22,6 +22,9 @@ export default function EditCategory() {
     slug: "",
     businessLevel: "INDIVIDUAL",
     status: "active",
+    pricingModel: "STANDARD",
+    pricingUnitType: "UNIT",
+    pricingRate: 0,
     createdBy: null,
     updatedBy: null,
     createdAt: null,
@@ -180,6 +183,45 @@ export default function EditCategory() {
               <option value="SMALL_TEAM">Small Team</option>
               <option value="ENTERPRISE">Enterprise</option>
             </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium">Pricing Model</label>
+              <select
+                name="pricingModel"
+                value={category.pricingModel || "STANDARD"}
+                onChange={handleChange}
+                className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="STANDARD">Standard</option>
+                <option value="QUANTITY_BASED">Quantity Based</option>
+                <option value="AREA_BASED">Area Based</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Pricing Unit</label>
+              <select
+                name="pricingUnitType"
+                value={category.pricingUnitType || "UNIT"}
+                onChange={handleChange}
+                className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 bg-white"
+              >
+                <option value="UNIT">Unit</option>
+                <option value="SQFT">Sq Ft</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Default Rate (Rs)</label>
+              <input
+                type="number"
+                min="0"
+                name="pricingRate"
+                value={category.pricingRate ?? 0}
+                onChange={handleChange}
+                className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
           {/* ================= AUDIT ================= */}

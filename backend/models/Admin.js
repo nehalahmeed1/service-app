@@ -26,6 +26,10 @@ const adminSchema = new mongoose.Schema(
       enum: ["PENDING", "APPROVED", "REJECTED"],
       default: "PENDING",
     },
+    approvalNotificationsReadAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

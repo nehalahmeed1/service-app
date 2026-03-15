@@ -11,6 +11,7 @@ const {
   deleteSubCategory,
   bulkUploadSubCategories,
   toggleSubCategoryStatus,
+  bulkUpdateSubCategoryPricing,
 } = require("../../controllers/admin/subCategory.controller");
 
 /**
@@ -32,5 +33,6 @@ router.patch(
 
 router.delete("/:id", adminAuthMiddleware, deleteSubCategory);
 router.post("/bulk-upload", adminAuthMiddleware, bulkUploadSubCategories);
+router.post("/bulk-pricing", adminAuthMiddleware, bulkUpdateSubCategoryPricing);
 
 module.exports = router;

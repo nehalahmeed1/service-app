@@ -20,7 +20,7 @@ async function fetchCategories() {
     status: { $in: ["ACTIVE", "active"] },
     deleted_at: null,
   })
-    .select("_id name slug businessLevel")
+    .select("_id name slug businessLevel pricingModel pricingUnitType pricingRate")
     .sort({ name: 1 })
     .lean();
 

@@ -17,6 +17,7 @@ export default function AdminApprovalDetailPage() {
   const [loading, setLoading] = useState(true);
   const [rejectReason, setRejectReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
   const [audit, setAudit] = useState({ sectionAudit: [], timeline: [] });
 
   const loadProvider = async () => {
@@ -26,6 +27,10 @@ export default function AdminApprovalDetailPage() {
       const auditData = await fetchProviderAuditTrail(providerId);
       setProvider(data);
       setAudit(auditData || { sectionAudit: [], timeline: [] });
+    } catch (error) {
+      console.error("Failed to load provider details", error);
+      setProvider(null);
+      setAudit({ sectionAudit: [], timeline: [] });
     } finally {
       setLoading(false);
     }
@@ -52,20 +57,36 @@ export default function AdminApprovalDetailPage() {
 
   const handleApprove = async () => {
     if (!window.confirm("Approve this provider?")) return;
-    setActionLoading(true);
-    await approveProvider(providerId);
-    navigate("/admin/approvals");
+    setActionError("");
+    try {
+      setActionLoading(true);
+      await approveProvider(providerId);
+      navigate("/admin/approvals");
+    } catch (error) {
+      console.error("Failed to approve provider", error);
+      setActionError(error?.response?.data?.message || "Failed to approve provider");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleReject = async () => {
-    if (!rejectReason) {
+    if (!rejectReason.trim()) {
       alert("Rejection reason is required");
       return;
     }
     if (!window.confirm("Reject this provider?")) return;
-    setActionLoading(true);
-    await rejectProvider(providerId, rejectReason);
-    navigate("/admin/approvals");
+    setActionError("");
+    try {
+      setActionLoading(true);
+      await rejectProvider(providerId, rejectReason.trim());
+      navigate("/admin/approvals");
+    } catch (error) {
+      console.error("Failed to reject provider", error);
+      setActionError(error?.response?.data?.message || "Failed to reject provider");
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
@@ -194,6 +215,10 @@ export default function AdminApprovalDetailPage() {
           placeholder="Rejection reason (required if rejecting)"
           className="w-full border rounded p-3 text-sm"
         />
+
+        {actionError ? (
+          <p className="text-sm text-red-600">{actionError}</p>
+        ) : null}
 
         <div className="flex gap-3">
           <button

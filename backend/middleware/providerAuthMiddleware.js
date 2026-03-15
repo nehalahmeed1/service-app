@@ -13,7 +13,11 @@ module.exports = async function providerAuthMiddleware(req, res, next) {
 
     const decodedToken = await admin.auth().verifyIdToken(idToken);
 
-    const email = decodedToken.email;
+    const email = String(decodedToken.email || "").toLowerCase().trim();
+
+    if (!email) {
+      return res.status(401).json({ message: "Invalid token payload" });
+    }
 
     const provider = await Provider.findOne({ email });
 

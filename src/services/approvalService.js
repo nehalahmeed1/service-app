@@ -25,6 +25,15 @@ export const fetchApprovalNotifications = async () => {
 };
 
 /**
+ * Mark admin approval notifications as read
+ * POST /api/admin/approvals/notifications/read
+ */
+export const markApprovalNotificationsRead = async () => {
+  const res = await adminApi.post("/admin/approvals/notifications/read");
+  return res.data.data;
+};
+
+/**
  * Fetch single provider details
  * GET /api/admin/approvals/providers/:id
  */

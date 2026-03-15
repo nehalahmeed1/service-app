@@ -9,6 +9,10 @@ export default function CreateSubCategory() {
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [businessLevel, setBusinessLevel] = useState("");
+  const [basePrice, setBasePrice] = useState("");
+  const [pricingModel, setPricingModel] = useState("STANDARD");
+  const [pricingUnitType, setPricingUnitType] = useState("UNIT");
+  const [pricingRate, setPricingRate] = useState("");
   const [categories, setCategories] = useState([]);
 
   const [loading, setLoading] = useState(false);
@@ -47,6 +51,17 @@ export default function CreateSubCategory() {
       return;
     }
 
+    const parsedBasePrice = Number(basePrice || 0);
+    if (!Number.isFinite(parsedBasePrice) || parsedBasePrice < 0) {
+      setError("Base price must be a non-negative number");
+      return;
+    }
+    const parsedPricingRate = Number(pricingRate || 0);
+    if (!Number.isFinite(parsedPricingRate) || parsedPricingRate < 0) {
+      setError("Pricing rate must be a non-negative number");
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
@@ -54,6 +69,10 @@ export default function CreateSubCategory() {
       await createSubCategory({
         name: name.trim(),
         category_id: categoryId,
+        basePrice: parsedBasePrice,
+        pricingModel,
+        pricingUnitType,
+        pricingRate: parsedPricingRate,
       });
 
       navigate("/admin/sub-categories");
@@ -130,6 +149,57 @@ export default function CreateSubCategory() {
             value={businessLevel || "Auto from category"}
             disabled
           />
+        </div>
+
+        <div>
+          <label className="block mb-1 font-medium">
+            Base Price (Rs)
+          </label>
+          <input
+            type="number"
+            min="0"
+            className="w-full border p-2 rounded"
+            placeholder="e.g. 499"
+            value={basePrice}
+            onChange={(e) => setBasePrice(e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className="block mb-1 font-medium">Pricing Model</label>
+            <select
+              className="w-full border p-2 rounded bg-white"
+              value={pricingModel}
+              onChange={(e) => setPricingModel(e.target.value)}
+            >
+              <option value="STANDARD">Standard</option>
+              <option value="QUANTITY_BASED">Quantity Based</option>
+              <option value="AREA_BASED">Area Based</option>
+            </select>
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Pricing Unit</label>
+            <select
+              className="w-full border p-2 rounded bg-white"
+              value={pricingUnitType}
+              onChange={(e) => setPricingUnitType(e.target.value)}
+            >
+              <option value="UNIT">Unit</option>
+              <option value="SQFT">Sq Ft</option>
+            </select>
+          </div>
+          <div>
+            <label className="block mb-1 font-medium">Rate (Rs)</label>
+            <input
+              type="number"
+              min="0"
+              className="w-full border p-2 rounded"
+              placeholder="e.g. 180"
+              value={pricingRate}
+              onChange={(e) => setPricingRate(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* Actions */}

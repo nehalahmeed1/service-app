@@ -34,15 +34,23 @@ export default function ProviderSubHeader() {
 
   if (!current) return null;
 
+  const goBack = () => {
+    if (typeof window !== "undefined" && Number(window.history?.state?.idx) > 0) {
+      navigate(-1);
+      return;
+    }
+    navigate("/provider/dashboard");
+  };
+
   return (
     <div className="sticky top-16 z-40 bg-white border-b">
       <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-2 text-sm">
         <button
-          onClick={() => navigate("/provider/dashboard")}
+          onClick={goBack}
           className="flex items-center gap-1 text-primary hover:underline"
         >
           <Icon name="ArrowLeft" size={16} />
-          Dashboard
+          Back
         </button>
 
         <span className="text-muted-foreground">/</span>

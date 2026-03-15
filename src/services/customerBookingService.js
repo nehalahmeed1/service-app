@@ -34,3 +34,35 @@ export async function cancelCustomerBooking(bookingId, reason) {
   );
   return response.data?.data;
 }
+
+export async function rescheduleCustomerBooking(bookingId, payload) {
+  const response = await customerBookingApi.patch(
+    `/customer/bookings/${bookingId}/reschedule`,
+    payload
+  );
+  return response.data?.data;
+}
+
+export async function raiseCustomerBookingDispute(bookingId, payload) {
+  const response = await customerBookingApi.post(
+    `/customer/bookings/${bookingId}/dispute`,
+    payload
+  );
+  return response.data?.data;
+}
+
+export async function submitCustomerBookingReview(bookingId, payload) {
+  const response = await customerBookingApi.post(
+    `/customer/bookings/${bookingId}/review`,
+    payload
+  );
+  return response.data?.data;
+}
+
+export async function submitCustomerBookingPayment(bookingId, payload) {
+  const response = await customerBookingApi.post(
+    `/customer/bookings/${bookingId}/payment`,
+    payload
+  );
+  return response.data?.data;
+}

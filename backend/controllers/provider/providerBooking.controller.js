@@ -7,6 +7,9 @@ function buildProviderServiceScope(provider) {
   if (provider?.serviceSubCategoryId) {
     subCategoryIds.push(provider.serviceSubCategoryId);
   }
+  if (Array.isArray(provider?.serviceSubCategoryIds)) {
+    subCategoryIds.push(...provider.serviceSubCategoryIds);
+  }
   if (provider?.verification?.work?.subCategoryId) {
     subCategoryIds.push(provider.verification.work.subCategoryId);
   }

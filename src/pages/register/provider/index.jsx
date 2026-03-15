@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   createUserWithEmailAndPassword,
@@ -6,48 +6,56 @@ import {
   browserSessionPersistence,
 } from "firebase/auth";
 import axios from "axios";
+import Icon from "@/components/AppIcon";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 import { auth } from "@/firebase";
-import { useLanguage } from "@/context/LanguageContext";
 import { useTranslation } from "react-i18next";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export default function ProviderRegister() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
-  const { language, setLanguage } = useLanguage();
-  const { t, i18n } = useTranslation();
-
-  /* keep i18n in sync */
-  useEffect(() => {
-    if (i18n.language !== language) {
-      i18n.changeLanguage(language);
-    }
-  }, [language, i18n]);
-
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
 
   const [form, setForm] = useState({
     name: "",
     email: "",
-    service: "",
-    location: "",
     phone: "",
+    location: "Mancherial",
     password: "",
+    confirmPassword: "",
   });
 
+  const canSubmit = useMemo(() => {
+    return (
+      form.name.trim().length >= 3 &&
+      form.email.trim().length > 0 &&
+      form.phone.trim().length >= 10 &&
+      form.password.length >= 6 &&
+      form.confirmPassword.length >= 6
+    );
+  }, [form]);
+
+  const onChange = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleRegister = async () => {
-    if (
-      !form.name ||
-      !form.email ||
-      !form.service ||
-      !form.location ||
-      !form.phone ||
-      !form.password
-    ) {
-      alert(t("fillAllFields") || "Please fill all fields");
+    setError("");
+
+    if (!canSubmit) {
+      setError(t("fill_required_fields_correctly"));
+      return;
+    }
+
+    if (form.password !== form.confirmPassword) {
+      setError(t("password_confirm_mismatch") || "Passwords do not match.");
       return;
     }
 
@@ -55,233 +63,148 @@ export default function ProviderRegister() {
       setLoading(true);
       await setPersistence(auth, browserSessionPersistence);
 
-      /* 1️⃣ Firebase Authentication */
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        form.email,
+        form.email.trim(),
         form.password
       );
 
       const uid = userCredential.user.uid;
 
-      /* 2️⃣ Sync Provider to MongoDB (Admin Approval Flow) */
       await axios.post(`${API_BASE_URL}/auth/provider/register`, {
         firebaseUid: uid,
-        name: form.name,
-        email: form.email,
-        service: form.service,
-        location: form.location,
-        phone: form.phone,
+        name: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        location: form.location.trim(),
+        service: "",
       });
 
-      /* 3️⃣ Redirect to onboarding */
       navigate("/provider/onboarding", {
         replace: true,
         state: { fromRegistration: true },
       });
-
-    } catch (error) {
-      console.error("Provider register error:", error);
-
-      alert(
-        error?.response?.data?.message ||
-          error.message ||
-          t("registration_failed")
-      );
+    } catch (err) {
+      console.error("Provider register error:", err);
+      const message =
+        err?.response?.data?.message ||
+        err?.message ||
+        t("registration_failed") ||
+        "Registration failed";
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        {/* 🌐 Language Switch */}
-        <div style={{ textAlign: "right", marginBottom: 10 }}>
-          <button
-            onClick={() => setLanguage("en")}
-            style={language === "en" ? styles.langActive : styles.langBtn}
-          >
-            English
-          </button>
-          <button
-            onClick={() => setLanguage("hi")}
-            style={language === "hi" ? styles.langActive : styles.langBtn}
-          >
-            हिंदी
-          </button>
-          <button
-            onClick={() => setLanguage("te")}
-            style={language === "te" ? styles.langActive : styles.langBtn}
-          >
-            తెలుగు
-          </button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-white to-slate-100 px-4 py-8">
+      <div className="mx-auto max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-lg">
+        <div className="mb-5 flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-slate-900">
+            {t("provider_register_title")}
+          </h1>
+          <LanguageSwitcher />
         </div>
 
-        <h2 style={styles.title}>
-          {t("provider")} {t("register")}
-        </h2>
+        <p className="mb-5 text-sm text-slate-600">
+          {t("provider_register_subtitle")}
+        </p>
 
-        <input
-          style={styles.input}
-          placeholder={t("fullName") || "Full Name"}
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
+        <div className="space-y-3">
+          <Input
+            placeholder={t("fullName") || "Full Name"}
+            value={form.name}
+            onChange={(v) => onChange("name", v)}
+          />
+          <Input
+            type="email"
+            placeholder={t("email") || "Email"}
+            value={form.email}
+            onChange={(v) => onChange("email", v)}
+          />
+          <Input
+            placeholder={t("mobile") || "Mobile"}
+            value={form.phone}
+            onChange={(v) => onChange("phone", v.replace(/[^\d]/g, "").slice(0, 10))}
+          />
+          <Input
+            placeholder={t("serviceArea") || "Service Area"}
+            value={form.location}
+            onChange={(v) => onChange("location", v)}
+          />
 
-        <input
-          style={styles.input}
-          placeholder={t("email") || "Email"}
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-        />
-
-        <input
-          style={styles.input}
-          placeholder={t("service") || "Service"}
-          value={form.service}
-          onChange={(e) => setForm({ ...form, service: e.target.value })}
-        />
-
-        <input
-          style={styles.input}
-          placeholder={t("serviceArea") || "Location"}
-          value={form.location}
-          onChange={(e) => setForm({ ...form, location: e.target.value })}
-        />
-
-        <input
-          style={styles.input}
-          placeholder={t("mobile") || "Phone"}
-          value={form.phone}
-          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-        />
-
-        {/* 🔐 Password */}
-        <div style={styles.passwordWrapper}>
-          <input
-            type={showPassword ? "text" : "password"}
+          <PasswordInput
             placeholder={t("password") || "Password"}
             value={form.password}
-            onChange={(e) =>
-              setForm({ ...form, password: e.target.value })
-            }
-            style={styles.passwordInput}
+            visible={showPassword}
+            onToggle={() => setShowPassword((prev) => !prev)}
+            onChange={(v) => onChange("password", v)}
           />
-          <button
-            type="button"
-            onClick={() => setShowPassword((p) => !p)}
-            style={styles.eye}
-          >
-            {showPassword ? "🙈" : "👁️"}
-          </button>
+
+          <PasswordInput
+            placeholder={t("confirm_password") || "Confirm Password"}
+            value={form.confirmPassword}
+            visible={showConfirmPassword}
+            onToggle={() => setShowConfirmPassword((prev) => !prev)}
+            onChange={(v) => onChange("confirmPassword", v)}
+          />
         </div>
 
+        {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+
         <button
-          style={{ ...styles.btn, opacity: loading ? 0.7 : 1 }}
+          type="button"
           onClick={handleRegister}
           disabled={loading}
+          className="mt-5 h-11 w-full rounded-lg bg-primary text-sm font-semibold text-white hover:opacity-95 disabled:opacity-60"
         >
-          {loading ? t("registering") || "Registering..." : t("register")}
+          {loading ? (t("registering") || "Registering...") : (t("register") || "Register")}
         </button>
 
-        <button style={styles.link} onClick={() => navigate("/provider/login")}>
-          {t("back") || "Back"}
-        </button>
+        <div className="mt-4 flex items-center text-sm">
+          <button
+            type="button"
+            className="text-primary hover:underline"
+            onClick={() => navigate("/provider/login")}
+          >
+            {t("back") || "Back"}
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
-/* ===== STYLES ===== */
-const styles = {
-  page: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#f3f4f6",
-  },
-  card: {
-    width: 380,
-    maxWidth: "92%",
-    background: "#ffffff",
-    padding: 24,
-    borderRadius: 10,
-    boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-  },
-  title: {
-    marginBottom: 16,
-    fontSize: 18,
-    fontWeight: 600,
-    textAlign: "center",
-  },
-  input: {
-    width: "100%",
-    height: 44,
-    padding: "0 12px",
-    marginBottom: 12,
-    borderRadius: 6,
-    border: "1px solid #cbd5e1",
-    fontSize: 14,
-    boxSizing: "border-box",
-  },
-  passwordWrapper: {
-    position: "relative",
-    marginBottom: 12,
-  },
-  passwordInput: {
-    width: "100%",
-    height: 44,
-    padding: "0 44px 0 12px",
-    borderRadius: 6,
-    border: "1px solid #cbd5e1",
-    fontSize: 14,
-    boxSizing: "border-box",
-  },
-  eye: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    height: "100%",
-    width: 44,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-    fontSize: 16,
-  },
-  btn: {
-    width: "100%",
-    padding: 12,
-    background: "#2563eb",
-    color: "#fff",
-    border: "none",
-    borderRadius: 6,
-    marginTop: 8,
-    cursor: "pointer",
-  },
-  link: {
-    marginTop: 12,
-    background: "none",
-    border: "none",
-    color: "#2563eb",
-    cursor: "pointer",
-  },
-  langBtn: {
-    marginLeft: 6,
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-  },
-  langActive: {
-    marginLeft: 6,
-    fontWeight: "bold",
-    textDecoration: "underline",
-    background: "none",
-    border: "none",
-    cursor: "pointer",
-  },
-};
+function Input({ value, onChange, placeholder, type = "text" }) {
+  return (
+    <input
+      type={type}
+      value={value}
+      placeholder={placeholder}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm outline-none transition focus:border-primary"
+    />
+  );
+}
+
+function PasswordInput({ value, onChange, placeholder, visible, onToggle }) {
+  return (
+    <div className="relative">
+      <input
+        type={visible ? "text" : "password"}
+        value={value}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-11 w-full rounded-lg border border-slate-300 px-3 pr-10 text-sm outline-none transition focus:border-primary"
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-slate-500 hover:bg-slate-100"
+      >
+        <Icon name={visible ? "EyeOff" : "Eye"} size={16} />
+      </button>
+    </div>
+  );
+}

@@ -7,7 +7,8 @@
     "scripts":  {
                     "dev":  "nodemon server.js",
                     "start":  "node server.js",
-                    "benchmark:api":  "node scripts/benchmark-api.js"
+                    "benchmark:api":  "node scripts/benchmark-api.js",
+                    "migrate:pricing-config": "node scripts/migratePricingConfig.js"
                 },
     "keywords":  [
 
